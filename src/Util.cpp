@@ -39,7 +39,6 @@ vector<string> tokenize_skip( string& in, string seps)
   return toks;
 } 
 
-
 //=========================================================================
 CountdownTimer::CountdownTimer()
 :active_(false),

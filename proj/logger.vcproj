@@ -185,15 +185,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\src\Logger.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\Logger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\src\main.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Misc"
+			>
+			<File
 				RelativePath="..\src\GPSData.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\src\GPSData.h"
-				>
-			</File>
-			<File
-				RelativePath="..\src\main.cpp"
 				>
 			</File>
 			<File

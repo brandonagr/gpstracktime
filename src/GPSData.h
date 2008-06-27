@@ -25,33 +25,32 @@ public:
   double speed_;
   double bearing_;
 
-  /*
-  enum GPGGA {TIME=1,
-              LATITUDE,
-              LAT_DIR,
-              LONGITUDE,
-              LONG_DIR,
-              VALID,
-              NUMB_SATS,
-              HDOP,
-              ALTITUDE,
-              ALT_UNITS,
-              GEOID,
-              GEOID_UNITS,
-              BLANK,
-              CHECKSUM};
-  */
-
-  enum GPRMC {TIME=1,
-              SAT_FIX_STATUS,
-              LATITUDE,
-              LAT_DIR,
-              LONGITUDE,
-              LON_DIR,
-              SPEED,
-              BEARING,
-              DATE,
-              CHECKSUM};
+  
+  enum GPGGA {GGA_TIME=1,
+              GGA_LATITUDE,
+              GGA_LAT_DIR,
+              GGA_LONGITUDE,
+              GGA_LONG_DIR,
+              GGA_VALID,
+              GGA_NUMB_SATS,
+              GGA_HDOP,
+              GGA_ALTITUDE,
+              GGA_ALT_UNITS,
+              GGA_GEOID,
+              GGA_GEOID_UNITS,
+              GGA_BLANK,
+              GGA_CHECKSUM};
+  
+  enum GPRMC {RMC_TIME=1,
+              RMC_SAT_FIX_STATUS,
+              RMC_LATITUDE,
+              RMC_LAT_DIR,
+              RMC_LONGITUDE,
+              RMC_LON_DIR,
+              RMC_SPEED,
+              RMC_BEARING,
+              RMC_DATE,
+              RMC_CHECKSUM};
 
 public:
   GPSData();

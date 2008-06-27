@@ -15,6 +15,16 @@
 std::vector<std::string> tokenize( std::string& in, std::string seps);
 std::vector<std::string> tokenize_skip( std::string& in, std::string seps); 
 
+template<typename T>
+inline T convertTo(const std::string& s)
+{
+  T x;
+  std::istringstream i(s);
+  if (!(i >> x))
+    throw std::exception(s.c_str());
+  return x;
+} 
+
 
 //========================================================
 struct PrettyTime
@@ -305,20 +315,6 @@ inline std::string Params::get_safe(const std::string name, std::string val)
 
   return params_[name];
 }
-
-class ParamFileReader
-{
-private:
-  std::string filename_;
-  Params params_;  
-
-
-public:
-  ParamFileReader(const std::string filename);
-  
-  Params& get_params(){return params_;};
-  void reload();
-};
 
 
 #endif

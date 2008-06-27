@@ -16,28 +16,19 @@ GPSData::GPSData(string& gpsstring) //expects a valid $GPRMC NMEA string
 {    
   vector<string> parts=tokenize(gpsstring,",");
 
-  if (parts[GPRMC::SAT_FIX_STATUS]!="A")
+  if (parts[GPSData::RMC_SAT_FIX_STATUS]!="A")
   {
     valid_=false;
     return;
   }
 
-  char* blah; //dummy var to placate strtod function
-  string deg,min;
+  time_.set(parts[GPSData::RMC_TIME],false);
 
-  time_.set(parts[GPRMC::TIME],false);
+  lat_=convertTo<double>(parts[GPSData::RMC_LATITUDE].substr(0,2))+convertTo<double>(parts[GPSData::RMC_LATITUDE].substr(2))/60.0;  
+  lon_=convertTo<double>(parts[GPSData::RMC_LONGITUDE].substr(0,3))+convertTo<double>(parts[GPSData::RMC_LONGITUDE].substr(3))/60.0;
 
-  deg=parts[GPRMC::LATITUDE].substr(0,2);
-  min=parts[GPRMC::LATITUDE].substr(2);
-  lat_=strtod(deg.c_str(),&blah)+(strtod(min.c_str(),&blah)/60.0);
-  
-  deg=parts[GPRMC::LONGITUDE].substr(0,3);
-  min=parts[GPRMC::LONGITUDE].substr(3);
-  lon_=strtod(deg.c_str(),&blah)+(strtod(min.c_str(),&blah)/60.0);
-
-  speed_=strtod(parts[GPRMC::SPEED].c_str(),&blah)*1.15077945; //convert knots to miles/hour
-
-  bearing_=strtod(parts[GPRMC::BEARING].c_str(),&blah);
+  speed_=convertTo<double>(parts[GPSData::RMC_SPEED])*1.15077945; //convert knots to miles/hour  
+  bearing_=convertTo<double>(parts[GPSData::RMC_BEARING]);
 
   calc_state();
 }
@@ -53,14 +44,16 @@ double GPSData::distance(const GPSData& opos) //returns distance in feet
 
   double dx=state_x_-opos.state_x_;
   double dy=state_y_-opos.state_y_;
-  return sqrt(dx*dx+dy*dy)*1.0075; //Add a 0.75% increase
+  return sqrt(dx*dx+dy*dy);
 
-  /* //this formula has almost 5% error in distance calculation
+  /* 
+  //this formula has almost 5% error in distance calculation
   double ladif=(latitude_ - opos.latitude_) * 111300.0; //111300 m/deg
   double lodif=(longitude_ - opos.longitude_) * 85300.0; //85300 m/deg
   double aldif=(altitude_ - opos.altitude_);
 
   return sqrt(ladif*ladif + lodif*lodif + aldif*aldif);
+  */
   
  
   /*
@@ -71,9 +64,10 @@ double GPSData::distance(const GPSData& opos) //returns distance in feet
       pow((sin((latitude_-opos.latitude_)/2)),2) + cos(latitude_)*cos(opos.latitude_)*pow(sin((longitude_-opos.longitude_)/2),2)
      ) 
     );
+  */
 
-
-   //Longer trig calculation is only about 0.000004 meters more accurate over 1000 measurements
+  /*
+  //Longer trig calculation is only about 0.000004 meters more accurate over 1000 measurements
   return 6380795.0 * 
    atan( 
     sqrt( pow(cos(opos.latitude_)*sin(longitude_-opos.longitude_),2) +
@@ -89,7 +83,6 @@ double GPSData::distance(const GPSData& opos) //returns distance in feet
 //----------------------------------------------------------------
 void GPSData::calc_state()
 {
-  valid_=true;
 // Code to convert from decimal degrees to state plan.
 // Code based on asp code from Gerry Daumiller, Montana State Library 8-23-02 email. ASP code on web at http://nris.state.mt.us/gis/projection/projection.html.  
 //Translated to javascript by Jeff Miller, Jefferson County, WA and April Lafferty, Thurston County, WA.
@@ -166,7 +159,7 @@ GPSUtil::GPSUtil(Params& params)
   cout<<"Initializing GPS Connection..."<<endl;
 
 
-  fstream fin(params.get<std::string>("RallyeReplayFile").c_str(),ios::in);
+  fstream fin(params.get<std::string>("GPSReplayFile").c_str(),ios::in);
   if (fin.is_open()) //load replay
   {
     replay_=true;
@@ -198,8 +191,10 @@ GPSUtil::GPSUtil(Params& params)
     catch(exception e)
     {
       std::cout<<"Failed to open com port: "<<e.what()<<std::endl;
+
     }
-    std::cout<<"Successfully initialized serial port!"<<std::endl;
+
+    
   }
 }
 
