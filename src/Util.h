@@ -18,6 +18,9 @@ std::vector<std::string> tokenize_skip( std::string& in, std::string seps);
 template<typename T>
 inline T convertTo(const std::string& s)
 {
+  if (s.length()==0)
+    return T(0);
+
   T x;
   std::istringstream i(s);
   if (!(i >> x))

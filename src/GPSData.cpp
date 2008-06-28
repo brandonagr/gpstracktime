@@ -139,11 +139,8 @@ void GPSData::calc_state()
 //----------------------------------------------------------------
 ostream& operator << (ostream& os, GPSData& pos)
 {
-  os<<"Valid: "<<(pos.valid_?"Yes":"No")<<endl;
-  os<<"Lat: "<<pos.lat_<<endl;
-  os<<"Long:"<<pos.lon_<<endl;
-  os<<"Speed:"<<pos.speed_<<endl;
-  os<<"Time:"<<pos.time_.get_string()<<endl<<endl;
+  os.setf(ios_base::fixed);
+  os<<(pos.valid_?"Y":"N")<<"\t"<<pos.state_x_<<"\t"<<pos.state_y_<<"\t"<<pos.speed_<<"\t"<<pos.bearing_<<"\t"<<pos.time_;  
 
   return os;
 }

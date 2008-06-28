@@ -1,9 +1,12 @@
 #include <iostream>
+#include "Logger.h"
 
 using namespace std;
 
 
 void main()
 {
-  cout<<"empty!"<<endl;
+  GPSLogger logger("logger_settings.txt");
+
+  logger.run_logging();
 }
