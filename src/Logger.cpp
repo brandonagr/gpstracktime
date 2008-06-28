@@ -49,7 +49,7 @@ void GPSLogger::run_logging()
         if (in_session)
         {
           //make sure speed is still above 35
-          if (gpspos_.speed_<35.0)
+          if (gpspos_.speed_<10.0)
           {
             cout<<"no longer in session!"<<endl;
             in_session=false;
@@ -77,7 +77,7 @@ void GPSLogger::run_logging()
         }
         else
         {
-          if (gpspos_.speed_>35.0)
+          if (gpspos_.speed_>50.0)
           {
             cout<<"going into session!"<<endl;
             in_session=true;
