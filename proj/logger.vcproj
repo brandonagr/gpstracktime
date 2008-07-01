@@ -185,15 +185,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\src\Logger.cpp"
+				RelativePath="..\src_log\Logger.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\Logger.h"
+				RelativePath="..\src_log\Logger.h"
 				>
 			</File>
 			<File
-				RelativePath="..\src\main.cpp"
+				RelativePath="..\src_log\main.cpp"
 				>
 			</File>
 		</Filter>
