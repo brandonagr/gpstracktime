@@ -26,4 +26,6 @@ void main()
   cout<<"the distance between them is "<<point1.distance(point2)<<endl;  
   cout<<"the time between them is "<<(point2.time_-point1.time_).get_seconds()<<endl;
   cout<<point1<<endl<<point2<<endl;
+  cout<<point1.state_x_<<" "<<point1.state_y_<<" "<<point1.time_.get_seconds()<<endl;
+  cout<<point2.state_x_<<" "<<point2.state_y_<<" "<<point2.time_.get_seconds()<<endl;
 }

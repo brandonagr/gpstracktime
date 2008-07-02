@@ -249,3 +249,24 @@ std::string GPSUtil::get_gps_line(double dt)
 
   return linedata;
 }
+
+
+/*
+Code to convert a gps log into a list of just the state plan coords
+  ifstream left("raw_gps_data/start.txt");
+  ofstream left_out("raw_gps_data/start state.dat");
+  left_out.setf(ios::fixed);
+  string line;
+  while(!left.eof())
+  {
+    getline(left,line);
+
+    if (GPSData::is_GPRMC(line))
+    {
+      GPSData d(line);
+      left_out<<d.state_x_<<" "<<d.state_y_<<" "<<d.time_.get_seconds()<<endl;
+    }
+  }
+  left_out.close();
+  left.close();
+*/

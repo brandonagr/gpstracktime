@@ -379,7 +379,7 @@ void Camera::setupCamPos(float rx, float ry, float dist, Vec3 lookat)
 // set up camera position
 //-------------------------------------------------
 void Camera::calcCamPos()
-{
+{  
   float cX=cos(rx_)*dist_;
   cam_pos_[0]=cam_lookat_[0]+cX*sin(ry_);
   cam_pos_[1]=cam_lookat_[1]+sin(rx_)*dist_;
@@ -395,7 +395,6 @@ void Camera::calcCamPos()
 void Camera::moveLookAt(Vec3 dmove)
 {
   cam_lookat_+=dmove;
-  std::cout<<cam_lookat_<<endl;
 }
 void Camera::setLookAt(Vec3 pos)
 {
@@ -410,10 +409,10 @@ void Camera::rotateCam(float dry, float drx)
   ry_+=dry;
   rx_+=drx;
 
-  if (rx_>(PI_/2.0f)-0.01f)
-    rx_=PI_/2.0f-0.01f;
-  if (rx_<-(PI_/2.0f)+0.01f)
-    rx_=-PI_/2.0f+0.01f;
+  if (rx_>(PI_/2.0f)-0.0001f)
+    rx_=PI_/2.0f-0.0001f;
+  if (rx_<0.0f)
+    rx_=0.0f;
 }
 
 //-------------------------------------------------
@@ -434,24 +433,23 @@ void Camera::moveCamDist(float ddist)
 //-------------------------------------------------
 void Camera::moveDrive(float dx, float dy)
 {
-	/*
   //drive along x/z plane
 
   float sY=sin(ry_);
   float cY=cos(ry_);
   
-  if (dz)
+  if (dy)
   {
-    cam_lookat_[0]-=sY*dz; //x
-    cam_lookat_[2]+=cY*dz; //z
+    cam_lookat_[0]-=sY*dy*0.2f*dist_; //x
+    cam_lookat_[2]+=cY*dy*0.2f*dist_; //z
   }
   if (dx)
   {
-    cam_lookat_[0]+=cY*dx;
-    cam_lookat_[2]+=sY*dx;
+    cam_lookat_[0]+=cY*dx*0.2f*dist_;
+    cam_lookat_[2]+=sY*dx*0.2f*dist_;
   }
-  */
-
+  
+  /*
   //drive in screenspace
   Vec3 screen_right, screen_up;
   screen_right=cross(cam_dir_,cam_up_);
@@ -461,6 +459,7 @@ void Camera::moveDrive(float dx, float dy)
   screen_up.Normalise();
 
   cam_lookat_+=-dx*screen_right*0.2*dist_+-dy*screen_up*0.2*dist_;
+  */
 }
 
 //-------------------------------------------------

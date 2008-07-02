@@ -22,6 +22,10 @@ App::App(int wx, int wy, bool stereo)
   mouse_delta_(0,0),
   fresh_move_(false),
 
+  left_("./vis_data/track_data/left_corrected.dat",Vec3(0,0,0)),
+  right_("./vis_data/track_data/right_corrected.dat",Vec3(0,0,0)),
+  island_("./vis_data/track_data/island_corrected.dat",Vec3(0,0,0)),
+
   params_("./vis_data/settings.txt")
 { 
   set_window(window_width_, window_height_);
@@ -90,7 +94,7 @@ void App::init()
 
 
   cam_.setupParams(window_width_, window_height_);
-  cam_.setupCamPos(vl_pi/8.0f, -vl_pi/4.0f, 40.0f, Vec3(0,0,0));
+  cam_.setupCamPos(vl_pi/2.0f-0.0001f, vl_pi, 6500.0f, Vec3(0,0,0));
 }
 
 
@@ -114,7 +118,7 @@ void App::frame(float dt)
   if (fresh_move_ && len(mouse_delta_)>0.0f) //Look for camera updates
   {          
     if (left_mouse_down_)
-      cam_.moveLookAt(Vec3(mouse_delta_[0]/10.0f,0,mouse_delta_[1]/10.0f));
+      cam_.moveDrive(mouse_delta_[0]/50.0f,mouse_delta_[1]/50.0f);
     if (middle_mouse_down_)
       cam_.moveCamDist(mouse_delta_[1]/15.0f);
     if (right_mouse_down_)
@@ -225,6 +229,14 @@ void App::render_frame(float dt)
   }
 
 
+  //Draw track stuff  
+  left_.render();
+  right_.render();
+  island_.render();  
+
+
+
+
   //display current time
   /*
   {    
@@ -253,13 +265,13 @@ void App::render_frame(float dt)
 
   //render runs
   for(int i=0; i<numb_runs_; i++) 
-    rundata_[i].render();
+    PointLoop_[i].render();  
 
 
   glEnable(GL_LIGHTING);
   for(int i=0; i<numb_runs_; i++)
   {
-    glColor3d(rundata_[i].color()[0],rundata_[i].color()[1],rundata_[i].color()[2]);
+    glColor3d(PointLoop_[i].color()[0],PointLoop_[i].color()[1],PointLoop_[i].color()[2]);
     glPushMatrix();
       
       glTranslated(markerdata_[i].pos_[0],0.0,markerdata_[i].pos_[1]);

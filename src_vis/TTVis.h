@@ -35,6 +35,11 @@ public:
 
 private:
 
+  PointLoop left_;
+  PointLoop right_;
+  PointLoop island_;
+  
+  //PointLoop dc_;
   
   //utility vars  
   Params params_;

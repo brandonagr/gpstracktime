@@ -15,10 +15,19 @@
 #include "TTVis.h"
 
 
+#include "GPSData.h"
+
+
+
+
+
+using namespace std;
+
+
 
 std::auto_ptr<App> app;
 
-//Callbacks have to be regular nonmember functions
+//Glut callbacks that link to App class
 void glutReshape(int width, int height)
 {
   glViewport(0, 0, width, height);
