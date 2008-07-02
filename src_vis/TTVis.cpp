@@ -22,11 +22,12 @@ App::App(int wx, int wy, bool stereo)
   mouse_delta_(0,0),
   fresh_move_(false),
 
+  session_("./gps_record s4.txt",Vec3(1,0,0)),
+
   left_("./vis_data/track_data/left_corrected.dat",Vec3(0,0,0)),
   right_("./vis_data/track_data/right_corrected.dat",Vec3(0,0,0)),
   island_("./vis_data/track_data/island_corrected.dat",Vec3(0,0,0)),
   start_("./vis_data/track_data/start_corrected.dat",Vec3(0,0.75f,0),false),
-
 
   params_("./vis_data/settings.txt")
 { 
@@ -237,6 +238,8 @@ void App::render_frame(float dt)
   island_.render(); 
   start_.render();
 
+  session_.render();
+
 
 
 
@@ -355,17 +358,20 @@ void App::keypress(unsigned char key)
 void App::keypress(int key) 
 { 
   switch(key)
-  {  
-    /*
+  {      
   case GLUT_KEY_UP:
+    session_.move(Vec2(0.0f,-1.0f));
     break;
   case GLUT_KEY_DOWN:
+    session_.move(Vec2(0.0f,1.0f));
     break;
   case GLUT_KEY_RIGHT:
+    session_.move(Vec2(1.0f,0.0f));
     break;
   case GLUT_KEY_LEFT:
+    session_.move(Vec2(-1.0f,0.0f));
     break;
-    */
+    
   case 27:
     exit(0);
     break;

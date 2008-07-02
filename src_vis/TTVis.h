@@ -35,6 +35,8 @@ public:
 
 private:
 
+  TrackData session_;
+
   LineStrip left_;
   LineStrip right_;
   LineStrip island_;

@@ -42,6 +42,28 @@
 
 //Holds all of the data for a given run
 //===================================================================
+class TrackData
+{
+private:
+  std::vector<Vec2> data_;
+  Vec3 color_;
+
+public:
+  TrackData(std::string filename, Vec3& color);
+
+  void print_closest(Vec2& pos);
+
+  Vec2 get_average();
+  void center_on(Vec2& center);
+  void flip_y();
+
+  void move(Vec2& dx);
+
+  void render();
+};
+
+
+//===================================================================
 class LineStrip
 {
 private:
