@@ -35,7 +35,9 @@ public:
 
 private:
 
-  TrackData session_;
+  TrackData session1_;
+  TrackData session2_;
+  TrackData session3_;
 
   LineStrip left_;
   LineStrip right_;
