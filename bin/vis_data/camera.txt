@@ -1,0 +1,7 @@
+50
+70
+30
+
+# camera aperature
+# focal length
+# eye seperation is calculated from focal length divided by this number
