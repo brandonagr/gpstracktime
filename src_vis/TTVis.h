@@ -35,11 +35,12 @@ public:
 
 private:
 
-  PointLoop left_;
-  PointLoop right_;
-  PointLoop island_;
+  LineStrip left_;
+  LineStrip right_;
+  LineStrip island_;
+  LineStrip start_;
   
-  //PointLoop dc_;
+  //LineStrip dc_;
   
   //utility vars  
   Params params_;

@@ -21,16 +21,16 @@
   Vec2 vel_;
   Vec2 acc_;
 
-  PointLoopPoint()
+  LineStripPoint()
     :time_(0)
   {}
-  PointLoopPoint(double time, Vec2& pos)
+  LineStripPoint(double time, Vec2& pos)
     :time_(time),
      pos_(pos),
      vel_(0),
      acc_(0)
   {}
-  PointLoopPoint(double time, Vec2& pos, Vec2& vel, Vec2& acc)
+  LineStripPoint(double time, Vec2& pos, Vec2& vel, Vec2& acc)
     :time_(time),
      pos_(pos),
      vel_(vel),
@@ -42,14 +42,15 @@
 
 //Holds all of the data for a given run
 //===================================================================
-class PointLoop
+class LineStrip
 {
 private:
   std::vector<Vec2> data_;
   Vec3 color_;
+  bool loop_;
   
 public:
-  PointLoop(std::string filename, Vec3& color);
+  LineStrip(std::string filename, Vec3& color, bool loop=true);
 
   void print_closest(Vec2& pos);
 

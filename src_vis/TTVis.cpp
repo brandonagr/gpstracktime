@@ -25,6 +25,8 @@ App::App(int wx, int wy, bool stereo)
   left_("./vis_data/track_data/left_corrected.dat",Vec3(0,0,0)),
   right_("./vis_data/track_data/right_corrected.dat",Vec3(0,0,0)),
   island_("./vis_data/track_data/island_corrected.dat",Vec3(0,0,0)),
+  start_("./vis_data/track_data/start_corrected.dat",Vec3(0,0.75f,0),false),
+
 
   params_("./vis_data/settings.txt")
 { 
@@ -232,7 +234,8 @@ void App::render_frame(float dt)
   //Draw track stuff  
   left_.render();
   right_.render();
-  island_.render();  
+  island_.render(); 
+  start_.render();
 
 
 
@@ -265,13 +268,13 @@ void App::render_frame(float dt)
 
   //render runs
   for(int i=0; i<numb_runs_; i++) 
-    PointLoop_[i].render();  
+    LineStrip_[i].render();  
 
 
   glEnable(GL_LIGHTING);
   for(int i=0; i<numb_runs_; i++)
   {
-    glColor3d(PointLoop_[i].color()[0],PointLoop_[i].color()[1],PointLoop_[i].color()[2]);
+    glColor3d(LineStrip_[i].color()[0],LineStrip_[i].color()[1],LineStrip_[i].color()[2]);
     glPushMatrix();
       
       glTranslated(markerdata_[i].pos_[0],0.0,markerdata_[i].pos_[1]);
@@ -332,6 +335,13 @@ void App::keypress(unsigned char key)
   case 'R':
   case 'r':
       reset();      
+    break;
+
+  case 'l':
+    island_.print_closest(Vec2(cam_.lookat()[0],cam_.lookat()[2]));
+    break;
+  case 'k':
+    right_.print_closest(Vec2(cam_.lookat()[0],cam_.lookat()[2]));
     break;
 
   case 27:

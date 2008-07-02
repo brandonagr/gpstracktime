@@ -7,13 +7,14 @@ using namespace std;
 
 // Constructor
 //------------------------------------------------------------------
-PointLoop::PointLoop(std::string filename, Vec3& color)
-:color_(color)
+LineStrip::LineStrip(std::string filename, Vec3& color, bool loop)
+:color_(color),
+ loop_(loop)
 { 
   ifstream datafile(filename.c_str());
 
   if (!datafile.is_open())
-    throw AppError("Unable to open PointLoop file!");
+    throw AppError("Unable to open LineStrip file!");
 
 
   //Assume file is in the format:
@@ -39,7 +40,7 @@ PointLoop::PointLoop(std::string filename, Vec3& color)
 
 // get index of closest point
 //------------------------------------------------------------------
-void PointLoop::print_closest(Vec2& pos)
+void LineStrip::print_closest(Vec2& pos)
 {
   double best_dist=999999999.0;
   int best_index=-1;
@@ -63,7 +64,7 @@ void PointLoop::print_closest(Vec2& pos)
 
 // center on average position
 //------------------------------------------------------------------
-Vec2 PointLoop::get_average()
+Vec2 LineStrip::get_average()
 {
   double x=0.0;
   double y=0.0;
@@ -77,12 +78,12 @@ Vec2 PointLoop::get_average()
 
   return Vec2(x,y);
 }
-void PointLoop::center_on(Vec2& center)
+void LineStrip::center_on(Vec2& center)
 {
   for(int i=0; i<(int)data_.size(); i++)
     data_[i]-=center;
 }
-void PointLoop::flip_y()
+void LineStrip::flip_y()
 {
   for(int i=0; i<(int)data_.size(); i++)
     data_[i][1]=-data_[i][1];
@@ -91,7 +92,7 @@ void PointLoop::flip_y()
 
 // Render the data
 //------------------------------------------------------------------
-void PointLoop::render()
+void LineStrip::render()
 {
   glBegin(GL_LINE_STRIP);
 
@@ -105,8 +106,11 @@ void PointLoop::render()
     glVertex3dv(t.Ref());
   }
 
-  t=Vec3(data_[0][0],0.0,data_[0][1]);
-  glVertex3dv(t.Ref());
+  if (loop_)
+  {
+    t=Vec3(data_[0][0],0.0,data_[0][1]);
+    glVertex3dv(t.Ref());
+  }
 
   glEnd();
 }
