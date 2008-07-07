@@ -24,6 +24,11 @@ App::App(int wx, int wy, bool stereo)
 
   trackdata_("./gps_record s4.txt"),//,Vec3(1,0,0)),
 
+  offx_(-992),
+  offy_(-535),
+  angle_(2.58359),
+  scale_(2.8349),
+
   params_("./vis_data/settings.txt")
 { 
   set_window(window_width_, window_height_);
@@ -41,17 +46,17 @@ void App::reset()
 //-------------------------------------------------------------------------------
 App::~App()
 {
-  
+  glDeleteTextures(1,&tex_);
 }
 
 // Setup rendering parameters
 //-------------------------------------------------------------------------------
 void App::init()
 {  
-  glClearColor(1.0,1.0,1.0,1.0);   
+  glClearColor(1.0,1.0,1.0,1.0);  
+  glClearDepth(1.0f);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  glPolygonMode(GL_FRONT_AND_BACK ,GL_FILL);
 
   
   glEnable(GL_POINT_SMOOTH);
@@ -60,14 +65,22 @@ void App::init()
 
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-  glLineWidth(0.1f);
+  glLineWidth(2.0f);
 
+  /*
   glEnable(GL_POLYGON_SMOOTH); 
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);   
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);    
+  */
    
 
   glDisable(GL_LIGHTING);
+
+  glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping ( NEW )
+	glShadeModel(GL_SMOOTH);						// Enable Smooth Shading
+	glDisable(GL_DEPTH_TEST);						// Enables Depth Testing	
+
+
 
   //GLfloat ambient[4] = {0.2f, 0.2f, 0.2f, 1.0};
   //GLfloat specular[4] = {0.4f, 0.4f, 0.4f, 1.0f};
@@ -95,6 +108,8 @@ void App::init()
 
   cam_.setupParams(window_width_, window_height_);
   cam_.setupCamPos(vl_pi/2.0f-0.0001f, vl_pi, 6500.0f, Vec3(0,0,0));
+
+  tex_=LoadTexture("track_1_2.tga");
 }
 
 
@@ -193,7 +208,7 @@ void App::frame(float dt)
 void App::render_frame(float dt)
 {
 //Draw the origin
-  glDisable(GL_LIGHTING);
+  /*
   glBegin(GL_LINES);
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]);
@@ -207,11 +222,12 @@ void App::render_frame(float dt)
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]);
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]+2.0f);
   glEnd();
+  */
 
   //drawText("Click/Drag to move cam:",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-12);  
   //drawText("Middle - Zoom",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-24);
   //drawText("Right - Rotate",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-36);
-
+/*
   //display fps
   {
     static float time=0.0f;
@@ -230,9 +246,36 @@ void App::render_frame(float dt)
     fps<<"FPS "<<last_fps;
     drawText(fps.str().c_str(), GLUT_BITMAP_HELVETICA_10, 0.5f,0.5f,0.5f, window_width_-60,window_height_-12);
   }
-
+*/
 
   //Draw track stuff  
+    glColor3f(1.0f,1.0f,1.0f);
+  glBindTexture( GL_TEXTURE_2D, tex_ );
+
+  cout<<offx_<<" "<<offy_<<" "<<angle_<<" "<<scale_<<endl;
+
+  Vec2 p1(offx_+1024.0*scale_*cos(angle_), offy_+1024.0*scale_*sin(angle_));
+  Vec2 p2(offx_+1024.0*scale_*cos(angle_-PI_/2.0), offy_+1024.0*scale_*sin(angle_-PI_/2.0));
+  Vec2 p3(offx_+1024.0*scale_*cos(angle_-PI_), offy_+1024.0*scale_*sin(angle_-PI_));
+  Vec2 p4(offx_+1024.0*scale_*cos(angle_-3.0*PI_/2.0), offy_+1024.0*scale_*sin(angle_-3.0*PI_/2.0));
+
+  glBegin(GL_QUADS);
+    glTexCoord2f(1.0f,0.0f); glVertex3f(p1[0], 0.0f, p1[1]);
+    glTexCoord2f(0.0f,0.0f); glVertex3f(p2[0], 0.0f, p2[1]);
+    glTexCoord2f(0.0f,1.0f); glVertex3f(p3[0], 0.0f, p3[1]);
+    glTexCoord2f(1.0f,1.0f); glVertex3f(p4[0], 0.0f, p4[1]);
+   glEnd();
+   
+/*
+  glBegin(GL_QUADS);
+    glTexCoord2f(1.0f,0.0f); glVertex3f(-1000.0+offx_, 0.0f, 1000.0+offy_);
+    glTexCoord2f(0.0f,0.0f); glVertex3f( 1000.0+offx_, 0.0f, 1000.0+offy_);
+    glTexCoord2f(0.0f,1.0f); glVertex3f( 1000.0+offx_, 0.0f, -1000.0+offy_);
+    glTexCoord2f(1.0f,1.0f); glVertex3f(-1000.0+offx_, 0.0f, -1000.0+offy_);
+   glEnd();*/
+
+
+  glColor3f(1.0f,0.0f,0.0f);
   trackdata_.render();
   
 
@@ -347,6 +390,19 @@ void App::keypress(unsigned char key)
     }
     break;
 
+   case 'n':
+    angle_+=0.001;
+    break;
+  case 'm':
+    angle_-=0.001;
+    break;
+  case 'k':
+    scale_*=0.999;
+    break;
+  case 'l':
+    scale_*=1.001;
+    break;
+
   case 27:
     exit(0);
     break;
@@ -359,16 +415,20 @@ void App::keypress(int key)
 { 
   switch(key)
   {      
-    /*
+    
   case GLUT_KEY_UP:
+    offx_+=1;
     break;
   case GLUT_KEY_DOWN:
+    offx_-=1;
     break;
   case GLUT_KEY_RIGHT:
+    offy_+=1;
     break;
   case GLUT_KEY_LEFT:
+    offy_-=1;
     break;
-    */
+    
     
   case 27:
     exit(0);

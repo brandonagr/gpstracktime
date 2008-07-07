@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     std::cout<<"NOT using stereo"<<std::endl;
   }
 
-  type |= GLUT_RGBA | GLUT_DOUBLE;// | GLUT_DEPTH;// | GLUT_ALPHA;// | GLUT_MULTISAMPLE;
+  type |= GLUT_RGBA | GLUT_DOUBLE| GLUT_DEPTH | GLUT_ALPHA;// | GLUT_MULTISAMPLE;
 
 
   glutInitDisplayMode(type);

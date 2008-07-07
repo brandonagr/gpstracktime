@@ -285,7 +285,6 @@ void LapData::render()
 }
 
 
-
 //===================================================================
 
 // Constructor
@@ -305,12 +304,14 @@ TWSData::TWSData(std::string filename)
   start_.center_on(origin_offset_feet);
   start_.flip_y();
 
-
+/*
   load_session_data_from_file(filename);
   split_into_laps();
-
-  // save laps
-  // how
+*/
+}
+TWSData::~TWSData()
+{
+  
 }
 
 // load either entire session or individual lap data
@@ -428,7 +429,5 @@ void TWSData::render()
   right_.render();
   island_.render();
   start_.render();
-
-
 }
 

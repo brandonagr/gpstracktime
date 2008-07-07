@@ -110,10 +110,13 @@ private:
   LineStrip island_;
   LineStrip start_;
 
+  
+
   //load and setup the texture to use somewhere in here as well
 
 public:
   TWSData(std::string filename);
+  ~TWSData();
 
   void load_data(std::string& filename);
 

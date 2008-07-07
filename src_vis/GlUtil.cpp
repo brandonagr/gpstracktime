@@ -8,9 +8,49 @@
 #include <sstream>
 #include <math.h>
 
+#include "tga.h"
 
 using namespace std;
 
+GLuint LoadTexture(char *TexName)
+{
+  TGAImg Img;        // Image loader
+  GLuint Texture;
+
+  // Load our Texture
+  if(Img.Load(TexName)!=IMG_OK)
+  {
+    cout<<"FAIL"<<endl;
+    return 0;
+  }
+
+  cout<<"Loaded image size to be "<<Img.GetWidth()<<", "<<Img.GetHeight()<<" bpp "<<Img.GetBPP()<<endl;
+
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1,&Texture);            // Allocate space for texture
+  glBindTexture(GL_TEXTURE_2D,Texture); // Set our Tex handle as current
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+
+  // Create the texture
+  if(Img.GetBPP()==24)
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, Img.GetWidth(), Img.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, Img.GetImg());
+  else if(Img.GetBPP()==32)
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 4, Img.GetWidth(), Img.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, Img.GetImg());
+  else
+  {
+    cout<<"unknown format!"<<endl;
+    return 0;
+  }
+
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+
+  cout<<"returning "<<Texture<<endl;
+  return Texture;
+}
 
 // MeshObject Loading
 //-------------------------------------------------------------------------------
@@ -478,12 +518,12 @@ void Camera::set_proj()
   calcCamPos();
 
   double ratio,radians,wd2;
-  double left,right,top,bottom,near=1.0,far=50000;
+  double left,right,top,bottom,near_cam=1.0,far_cam=50000;
 
   /* Misc stuff */
   ratio  = window_width_ / (double)window_height_;
   radians = DEG_TO_RAD * aperture_ / 2.0f;
-  wd2     = near * tan(radians);
+  wd2     = near_cam * tan(radians);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -491,7 +531,7 @@ void Camera::set_proj()
   right =   ratio * wd2;
   top    =   wd2;
   bottom = - wd2;
-  glFrustum(left,right,bottom,top,near,far);
+  glFrustum(left,right,bottom,top,near_cam,far_cam);
 
   glMatrixMode(GL_MODELVIEW);
   glDrawBuffer(GL_BACK);
@@ -511,13 +551,13 @@ void Camera::set_proj_right()
 
   Vec3 r;
   double ratio,radians,wd2,ndfl;
-  double left,right,top,bottom,near=0.1,far=10000;
+  double left,right,top,bottom,near_cam=0.1,far_cam=10000;
 
   /* Misc stuff */
   ratio  = window_width_ / (double)window_height_;
   radians = DEG_TO_RAD * aperture_ / 2.0f;
-  wd2     = near * tan(radians);
-  ndfl    = near / focallength_;
+  wd2     = near_cam * tan(radians);
+  ndfl    = near_cam / focallength_;
 
     /* Derive the two eye positions */
   r=cross(cam_dir_, cam_up_);
@@ -530,7 +570,7 @@ void Camera::set_proj_right()
   right =   ratio * wd2 - 0.5 * eyesep_ * ndfl;
   top    =   wd2;
   bottom = - wd2;
-  glFrustum(left,right,bottom,top,near,far);
+  glFrustum(left,right,bottom,top,near_cam,far_cam);
 
   glMatrixMode(GL_MODELVIEW);
   glDrawBuffer(GL_BACK_RIGHT);
@@ -551,13 +591,13 @@ void Camera::set_proj_left()
 
   Vec3 r;
   double ratio,radians,wd2,ndfl;
-  double left,right,top,bottom,near=0.1,far=10000;
+  double left,right,top,bottom,near_cam=0.1,far_cam=10000;
 
   /* Misc stuff */
   ratio  = window_width_ / (double)window_height_;
   radians = DEG_TO_RAD * aperture_ / 2.0f;
-  wd2     = near * tan(radians);
-  ndfl    = near / focallength_;
+  wd2     = near_cam * tan(radians);
+  ndfl    = near_cam / focallength_;
 
     /* Derive the two eye positions */
   r=cross(cam_dir_, cam_up_);
@@ -570,7 +610,7 @@ void Camera::set_proj_left()
   right =   ratio * wd2 + 0.5 * eyesep_ * ndfl;
   top    =   wd2;
   bottom = - wd2;
-  glFrustum(left,right,bottom,top,near,far);
+  glFrustum(left,right,bottom,top,near_cam,far_cam);
 
   glMatrixMode(GL_MODELVIEW);
   glDrawBuffer(GL_BACK_LEFT);

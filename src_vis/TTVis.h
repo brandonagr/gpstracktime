@@ -37,6 +37,9 @@ private:
 
   TWSData trackdata_;
 
+  GLuint tex_;
+  double offx_,offy_,angle_,scale_;
+
 
   //utility vars  
   Params params_;

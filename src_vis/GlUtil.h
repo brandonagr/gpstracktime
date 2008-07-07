@@ -17,6 +17,7 @@
 //Useful defines
 #define SMALL_NUMBER 0.0000001f
 
+GLuint LoadTexture(char *TexName);
 
 
 // Line segment to render, used for debug output
