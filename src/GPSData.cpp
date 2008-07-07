@@ -14,7 +14,7 @@ GPSData::GPSData()
 GPSData::GPSData(string& gpsstring) //expects a valid $GPRMC NMEA string
   :valid_(false)
 {    
-  vector<string> parts=tokenize(gpsstring,",");
+  vector<string> parts(tokenize(gpsstring,","));
 
   if (parts[GPSData::RMC_SAT_FIX_STATUS]!="A")
   {

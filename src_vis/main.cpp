@@ -3,7 +3,6 @@
 // when using gcc link with -lglut -lGL -lGLU -lm 
 //
 
-
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -13,13 +12,6 @@
 #include <GL/glut.h>
 
 #include "TTVis.h"
-
-
-#include "GPSData.h"
-
-
-
-
 
 using namespace std;
 
@@ -123,7 +115,7 @@ int main(int argc, char **argv)
     std::cout<<"NOT using stereo"<<std::endl;
   }
 
-  type |= GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH;// | GLUT_ALPHA;// | GLUT_MULTISAMPLE;
+  type |= GLUT_RGBA | GLUT_DOUBLE;// | GLUT_DEPTH;// | GLUT_ALPHA;// | GLUT_MULTISAMPLE;
 
 
   glutInitDisplayMode(type);

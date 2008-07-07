@@ -14,7 +14,7 @@
 #--------------------------------------------
 
 
-GPSPort COM3
+GPSPort COM5
 
 GPSReplayFile ./gps_replay.txt
 

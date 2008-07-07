@@ -22,14 +22,7 @@ App::App(int wx, int wy, bool stereo)
   mouse_delta_(0,0),
   fresh_move_(false),
 
-  session1_("./gps_record s2.txt",Vec3(1,0,0)),
-  session2_("./gps_record s3.txt",Vec3(0,0,1)),
-  session3_("./gps_record s4.txt",Vec3(1,0,1)),
-
-  left_("./vis_data/track_data/left_corrected.dat",Vec3(0,0,0)),
-  right_("./vis_data/track_data/right_corrected.dat",Vec3(0,0,0)),
-  island_("./vis_data/track_data/island_corrected.dat",Vec3(0,0,0)),
-  start_("./vis_data/track_data/start_corrected.dat",Vec3(0,0.75f,0),false),
+  trackdata_("./gps_record s4.txt"),//,Vec3(1,0,0)),
 
   params_("./vis_data/settings.txt")
 { 
@@ -63,7 +56,7 @@ void App::init()
   
   glEnable(GL_POINT_SMOOTH);
   glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);   
-  glPointSize(5.0f);
+  glPointSize(3.0f);
 
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -74,24 +67,26 @@ void App::init()
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);    
    
 
-  GLfloat ambient[4] = {0.2f, 0.2f, 0.2f, 1.0};
-  GLfloat specular[4] = {0.4f, 0.4f, 0.4f, 1.0f};
+  glDisable(GL_LIGHTING);
 
-  GLfloat light_ambient[4]  = {0.6f, 0.2f, 0.2f, 1.0f};
-  GLfloat light_pos[4]  = {0,25,0,1};
+  //GLfloat ambient[4] = {0.2f, 0.2f, 0.2f, 1.0};
+  //GLfloat specular[4] = {0.4f, 0.4f, 0.4f, 1.0f};
+
+  //GLfloat light_ambient[4]  = {0.6f, 0.2f, 0.2f, 1.0f};
+  //GLfloat light_pos[4]  = {0,25,0,1};
   
 
-  glEnable(GL_LIGHTING);
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
+  //glEnable(GL_LIGHTING);
+  //glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambient);
 
-  glLightfv(GL_LIGHT0,GL_POSITION,light_pos);
-  glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
-  glEnable(GL_LIGHT0);
+  //glLightfv(GL_LIGHT0,GL_POSITION,light_pos);
+  //glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
+  //glEnable(GL_LIGHT0);
   
-  glEnable(GL_COLOR_MATERIAL);
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-  glMaterialfv(GL_FRONT,GL_SPECULAR,specular);
-  glMaterialf(GL_FRONT,GL_SHININESS,50);
+  //glEnable(GL_COLOR_MATERIAL);
+  //glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+  //glMaterialfv(GL_FRONT,GL_SPECULAR,specular);
+  //glMaterialf(GL_FRONT,GL_SHININESS,50);
 
 
   //glEnable(GL_BLEND);
@@ -121,13 +116,16 @@ void App::frame(float dt)
 //Update Stuff
   //Move Camera
   if (fresh_move_ && len(mouse_delta_)>0.0f) //Look for camera updates
-  {          
-    if (left_mouse_down_)
-      cam_.moveDrive(mouse_delta_[0]/50.0f,mouse_delta_[1]/50.0f);
-    if (middle_mouse_down_)
+  {         
+    if ((left_mouse_down_ && right_mouse_down_) || middle_mouse_down_)
       cam_.moveCamDist(mouse_delta_[1]/15.0f);
-    if (right_mouse_down_)
-      cam_.rotateCam(mouse_delta_[0]/100.0f, mouse_delta_[1]/100.0f);    
+    else
+    {
+      if (left_mouse_down_)
+        cam_.moveDrive(mouse_delta_[0]/50.0f,mouse_delta_[1]/50.0f);
+      if (right_mouse_down_)
+        cam_.rotateCam(mouse_delta_[0]/100.0f, mouse_delta_[1]/100.0f);    
+    }
 
     fresh_move_=false;
   }  
@@ -210,9 +208,9 @@ void App::render_frame(float dt)
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]+2.0f);
   glEnd();
 
-  drawText("Click/Drag to move cam:",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-12);  
-  drawText("Middle - Zoom",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-24);
-  drawText("Right - Rotate",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-36);
+  //drawText("Click/Drag to move cam:",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-12);  
+  //drawText("Middle - Zoom",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-24);
+  //drawText("Right - Rotate",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-36);
 
   //display fps
   {
@@ -235,16 +233,8 @@ void App::render_frame(float dt)
 
 
   //Draw track stuff  
-  left_.render();
-  right_.render();
-  island_.render(); 
-  start_.render();
-
-  session1_.render();
-  session2_.render();
-  session3_.render();
-
-
+  trackdata_.render();
+  
 
 
   //display current time
@@ -344,11 +334,17 @@ void App::keypress(unsigned char key)
       reset();      
     break;
 
-  case 'l':
-    island_.print_closest(Vec2(cam_.lookat()[0],cam_.lookat()[2]));
-    break;
-  case 'k':
-    right_.print_closest(Vec2(cam_.lookat()[0],cam_.lookat()[2]));
+  case 'D':
+  case 'd':
+    {
+      static Vec2 last_pos(cam_.lookat()[0],cam_.lookat()[2]);
+
+      Vec2 current(cam_.lookat()[0],cam_.lookat()[2]);
+
+      cout<<len(last_pos-current)<<" Dist from "<<last_pos<<" to "<<current<<endl;
+
+      last_pos=current;
+    }
     break;
 
   case 27:
@@ -363,18 +359,16 @@ void App::keypress(int key)
 { 
   switch(key)
   {      
+    /*
   case GLUT_KEY_UP:
-    session1_.move(Vec2(0.0f,-1.0f));
     break;
   case GLUT_KEY_DOWN:
-    session1_.move(Vec2(0.0f,1.0f));
     break;
   case GLUT_KEY_RIGHT:
-    session1_.move(Vec2(1.0f,0.0f));
     break;
   case GLUT_KEY_LEFT:
-    session1_.move(Vec2(-1.0f,0.0f));
     break;
+    */
     
   case 27:
     exit(0);

@@ -35,17 +35,9 @@ public:
 
 private:
 
-  TrackData session1_;
-  TrackData session2_;
-  TrackData session3_;
+  TWSData trackdata_;
 
-  LineStrip left_;
-  LineStrip right_;
-  LineStrip island_;
-  LineStrip start_;
-  
-  //LineStrip dc_;
-  
+
   //utility vars  
   Params params_;
 
