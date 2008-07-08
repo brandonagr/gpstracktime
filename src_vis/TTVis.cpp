@@ -23,12 +23,12 @@ App::App(int wx, int wy, bool stereo)
   fresh_move_(false),
 
   trackdata_("./gps_record s4.txt"),//,Vec3(1,0,0)),
-
+/*
   offx_(-992),
   offy_(-535),
   angle_(2.58359),
-  scale_(2.8349),
-
+  scale_(1.414216562),
+*/
   params_("./vis_data/settings.txt")
 { 
   set_window(window_width_, window_height_);
@@ -46,7 +46,8 @@ void App::reset()
 //-------------------------------------------------------------------------------
 App::~App()
 {
-  glDeleteTextures(1,&tex_);
+  for(int i=0; i<16; i++)
+    glDeleteTextures(1,&tex[i]);
 }
 
 // Setup rendering parameters
@@ -108,8 +109,108 @@ void App::init()
 
   cam_.setupParams(window_width_, window_height_);
   cam_.setupCamPos(vl_pi/2.0f-0.0001f, vl_pi, 6500.0f, Vec3(0,0,0));
+  
+  for(int i=0; i<16; i++)
+  {
+    std::stringstream str;
 
-  tex_=LoadTexture("track_1_2.tga");
+    str<<"1_4_chunks/"<<i<<".tga";
+
+    tex[i]=LoadTexture((char*)str.str().c_str());
+  }
+
+  origin_x_=-50.0;
+  origin_y_=1240.0;
+  angle_=3.37159;
+  scale_=1024.0;
+  for(int i=0; i<16; i++)
+  {    
+    angle[i]=0.0;
+    scale[i]=2.0;
+  }
+  active_chunk=0;
+
+  offset_x[0]=-7;
+  offset_y[0]=3;
+  offset_x[1]=6;
+  offset_y[1]=-3;
+  offset_x[2]=3;
+  offset_y[2]=1;
+  offset_x[3]=0;
+  offset_y[3]=0;
+  offset_x[4]=-2;
+  offset_y[4]=-1;
+  offset_x[5]=16;
+  offset_y[5]=-6;
+  offset_x[6]=11;
+  offset_y[6]=-8;
+  offset_x[7]=15;
+  offset_y[7]=1;
+  offset_x[8]=2;
+  offset_y[8]=1;
+  offset_x[9]=-4;
+  offset_y[9]=-7;
+  offset_x[10]=0;
+  offset_y[10]=-8;
+  offset_x[11]=-3;
+  offset_y[11]=-9;
+  offset_x[12]=18;
+  offset_y[12]=-6;
+  offset_x[13]=5;
+  offset_y[13]=-23;
+  offset_x[14]=1;
+  offset_y[14]=-23;
+  offset_x[15]=0;
+  offset_y[15]=-21;
+
+  angle[0]=0.004;
+  angle[1]=-0.008;
+  angle[2]=0.0;
+  angle[3]=0.0;
+  angle[4]=-0.001;
+  angle[5]=0.0;
+  angle[6]=0.006;
+  angle[7]=-0.021;
+  angle[8]=0.009;
+  angle[9]=0.004;
+  angle[10]=-0.014;
+  angle[11]=-0.005;
+  angle[12]=0.015;
+  angle[13]=0.006;
+  angle[14]=0.001;
+  angle[15]=-0.003;
+
+  scale[10]=1.99798;
+  scale[12]=2.02615;
+  scale[14]=2.00397;
+
+
+  calc_reset_whole();
+
+}
+
+void App::calc_reset_whole()
+{
+  double dx_horiz=cos(angle_)*scale_;
+  double dx_vert=sin(angle_)*scale_;
+  double dy_horiz=cos(angle_+PI_/2.0)*scale_;
+  double dy_vert=sin(angle_+PI_/2.0)*scale_;
+
+  for(int i=0; i<16; i++)
+  {
+    int x_i=(i%4);
+    int y_i=(i/4);    
+
+    pos_x[i]=origin_x_+x_i*dx_horiz+y_i*dy_horiz;
+    pos_y[i]=origin_y_+x_i*dx_vert+y_i*dy_vert;
+  }
+}
+void App::output_state(int i)
+{
+  if (i<0)
+    cout<<"Main: "<<origin_x_<<", "<<origin_y_<<" "<<angle_<<" "<<scale_<<endl;
+  else
+    cout<<"Chunk "<<i<<": "<<offset_x[i]<<", "<<offset_y[i]<<" "<<angle[i]<<" "<<scale[i]<<endl;
 }
 
 
@@ -249,15 +350,49 @@ void App::render_frame(float dt)
 */
 
   //Draw track stuff  
-    glColor3f(1.0f,1.0f,1.0f);
-  glBindTexture( GL_TEXTURE_2D, tex_ );
+  glColor3f(1.0f,1.0f,1.0f);
 
-  cout<<offx_<<" "<<offy_<<" "<<angle_<<" "<<scale_<<endl;
+  for(int i=0; i<16; i++)
+  {
+    glBindTexture(GL_TEXTURE_2D, tex[i]);
 
-  Vec2 p1(offx_+1024.0*scale_*cos(angle_), offy_+1024.0*scale_*sin(angle_));
-  Vec2 p2(offx_+1024.0*scale_*cos(angle_-PI_/2.0), offy_+1024.0*scale_*sin(angle_-PI_/2.0));
-  Vec2 p3(offx_+1024.0*scale_*cos(angle_-PI_), offy_+1024.0*scale_*sin(angle_-PI_));
-  Vec2 p4(offx_+1024.0*scale_*cos(angle_-3.0*PI_/2.0), offy_+1024.0*scale_*sin(angle_-3.0*PI_/2.0));
+    double ang=angle_+angle[i]-PI_/4.0;//-PI_/2.0;
+    
+    Vec2 p1(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p2(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p3(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p4(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;    
+
+    glBegin(GL_QUADS);
+      glTexCoord2f(1.0f,0.0f); glVertex3f(p1[0], 0.0f, p1[1]);
+      glTexCoord2f(1.0f,1.0f); glVertex3f(p2[0], 0.0f, p2[1]);
+      glTexCoord2f(0.0f,1.0f); glVertex3f(p3[0], 0.0f, p3[1]);
+      glTexCoord2f(0.0f,0.0f); glVertex3f(p4[0], 0.0f, p4[1]);
+     glEnd();
+
+
+  }
+  
+    
+    
+    
+    /*glBindTexture( GL_TEXTURE_2D, tex_ );
+
+  //cout<<offx_<<" "<<offy_<<" "<<angle_<<" "<<scale_<<endl;
+
+
+  Vec2 p1(offx_+2048.0*scale_*cos(angle_), offy_+2048.0*scale_*sin(angle_));
+  Vec2 p2(offx_+2048.0*scale_*cos(angle_-PI_/2.0), offy_+2048.0*scale_*sin(angle_-PI_/2.0));
+  Vec2 p3(offx_+2048.0*scale_*cos(angle_-PI_), offy_+2048.0*scale_*sin(angle_-PI_));
+  Vec2 p4(offx_+2048.0*scale_*cos(angle_-3.0*PI_/2.0), offy_+2048.0*scale_*sin(angle_-3.0*PI_/2.0));
 
   glBegin(GL_QUADS);
     glTexCoord2f(1.0f,0.0f); glVertex3f(p1[0], 0.0f, p1[1]);
@@ -265,15 +400,8 @@ void App::render_frame(float dt)
     glTexCoord2f(0.0f,1.0f); glVertex3f(p3[0], 0.0f, p3[1]);
     glTexCoord2f(1.0f,1.0f); glVertex3f(p4[0], 0.0f, p4[1]);
    glEnd();
+   */
    
-/*
-  glBegin(GL_QUADS);
-    glTexCoord2f(1.0f,0.0f); glVertex3f(-1000.0+offx_, 0.0f, 1000.0+offy_);
-    glTexCoord2f(0.0f,0.0f); glVertex3f( 1000.0+offx_, 0.0f, 1000.0+offy_);
-    glTexCoord2f(0.0f,1.0f); glVertex3f( 1000.0+offx_, 0.0f, -1000.0+offy_);
-    glTexCoord2f(1.0f,1.0f); glVertex3f(-1000.0+offx_, 0.0f, -1000.0+offy_);
-   glEnd();*/
-
 
   glColor3f(1.0f,0.0f,0.0f);
   trackdata_.render();
@@ -391,17 +519,33 @@ void App::keypress(unsigned char key)
     break;
 
    case 'n':
-    angle_+=0.001;
+    angle[active_chunk]+=0.001;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case 'm':
-    angle_-=0.001;
+    angle[active_chunk]-=0.001;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case 'k':
-    scale_*=0.999;
+    scale[active_chunk]*=0.999;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case 'l':
-    scale_*=1.001;
+    scale[active_chunk]*=1.001;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
+
+  case ' ':
+    active_chunk++;
+    if (active_chunk==16)
+      active_chunk=0;
+
+    cout<<"Active chunk set to "<<active_chunk<<endl;    
+  break;
 
   case 27:
     exit(0);
@@ -417,16 +561,24 @@ void App::keypress(int key)
   {      
     
   case GLUT_KEY_UP:
-    offx_+=1;
+    offset_x[active_chunk]+=1;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case GLUT_KEY_DOWN:
-    offx_-=1;
+    offset_x[active_chunk]-=1;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case GLUT_KEY_RIGHT:
-    offy_+=1;
+    offset_y[active_chunk]+=1;
+    //calc_reset_whole();
+    output_state(active_chunk);
     break;
   case GLUT_KEY_LEFT:
-    offy_-=1;
+    offset_y[active_chunk]-=1;
+    calc_reset_whole();
+    output_state(active_chunk);
     break;
     
     

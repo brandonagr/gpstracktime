@@ -38,7 +38,26 @@ private:
   TWSData trackdata_;
 
   GLuint tex_;
-  double offx_,offy_,angle_,scale_;
+
+  GLuint tex[16];
+  double origin_x_;
+  double origin_y_;
+  double angle_;
+  double scale_;
+
+  double pos_x[16];
+  double pos_y[16];
+
+  double offset_x[16];
+  double offset_y[16];
+  double angle[16];
+  double scale[16];
+
+  void calc_reset_whole();
+  void output_state(int i=-1);
+
+  int active_chunk;
+  
 
 
   //utility vars  

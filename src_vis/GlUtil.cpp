@@ -24,7 +24,7 @@ GLuint LoadTexture(char *TexName)
     return 0;
   }
 
-  cout<<"Loaded image size to be "<<Img.GetWidth()<<", "<<Img.GetHeight()<<" bpp "<<Img.GetBPP()<<endl;
+  //cout<<"Loaded image size to be "<<Img.GetWidth()<<", "<<Img.GetHeight()<<" bpp "<<Img.GetBPP()<<endl;
 
   glEnable(GL_TEXTURE_2D);
   glGenTextures(1,&Texture);            // Allocate space for texture
@@ -48,7 +48,7 @@ GLuint LoadTexture(char *TexName)
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
 
-  cout<<"returning "<<Texture<<endl;
+  //cout<<"returning "<<Texture<<endl;
   return Texture;
 }
 
@@ -532,6 +532,7 @@ void Camera::set_proj()
   top    =   wd2;
   bottom = - wd2;
   glFrustum(left,right,bottom,top,near_cam,far_cam);
+  //glOrtho(0.0f,2048,2048,0.0f,near_cam,far_cam);
 
   glMatrixMode(GL_MODELVIEW);
   glDrawBuffer(GL_BACK);
