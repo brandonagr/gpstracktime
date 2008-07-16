@@ -69,6 +69,9 @@ struct PrettyTime
     else
       {pos1=2;pos2=4;}
 
+    while(setstring.substr(0,1)==" ")//remove leading whitespaces
+      setstring=setstring.substr(1);
+
     std::stringstream conv;
     conv<<setstring.substr(0,2);
     conv>>hour_;

@@ -141,7 +141,7 @@ public:
 
   void load_session_data_from_file(std::string& filename);  
   void split_into_laps();
-  bool crosses_finish_line(Vec2& a1, Vec2& a2);
+  bool crosses_finish_line(Vec2& a1, Vec2& a2, double* t);
 
   void load_lap_data_from_file(std::string& filename);
 

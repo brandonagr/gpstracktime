@@ -428,6 +428,65 @@ TWSData::TWSData(std::string filename)
     }
     while(error>0.05 && iter<50);
   }
+  
+
+  //now cut each lap to the start/finish line
+  for(int lap=0; lap<(int)laps_data_.size(); lap++)
+  {    
+    double t;
+    bool done=false;
+    while(!done) //get the start of the lap
+    {
+      LapDataPoint& p0=laps_data_[lap][0];
+      LapDataPoint& p1=laps_data_[lap][1];
+      if (crosses_finish_line(p0.pos_,p1.pos_,&t))
+      {
+        //new point is p0+t*(p1-p0) //linearly interpolate everything
+        LapDataPoint np;
+
+        np.time_=PrettyTime( p0.time_.get_seconds()+t*(p1.time_.get_seconds()-p0.time_.get_seconds()) );
+        np.pos_=p0.pos_+t*(p1.pos_-p0.pos_);
+        np.speed_=p0.speed_+t*(p1.speed_-p0.speed_);
+        np.bearing_=p0.bearing_+t*(p1.bearing_-p0.bearing_);
+        np.derived_vel_=p0.derived_vel_+t*(p1.derived_vel_-p0.derived_vel_);
+        np.valid_=true;
+
+        laps_data_[lap][0]=np;
+
+        done=true;
+      }
+      else
+        laps_data_[lap].erase(laps_data_[lap].begin());
+    }
+    done=false;
+    while(!done) //get the end of the lap
+    {
+      LapDataPoint& p0=laps_data_[lap][laps_data_[lap].size()-2];
+      LapDataPoint& p1=laps_data_[lap][laps_data_[lap].size()-1];
+      if (crosses_finish_line(p0.pos_,p1.pos_,&t))
+      {
+        //new point is p0+t*(p1-p0) //linearly interpolate everything
+        LapDataPoint np;
+
+        np.time_=PrettyTime( p0.time_.get_seconds()+t*(p1.time_.get_seconds()-p0.time_.get_seconds()) );
+        np.pos_=p0.pos_+t*(p1.pos_-p0.pos_);
+        np.speed_=p0.speed_+t*(p1.speed_-p0.speed_);
+        np.bearing_=p0.bearing_+t*(p1.bearing_-p0.bearing_);
+        np.derived_vel_=p0.derived_vel_+t*(p1.derived_vel_-p0.derived_vel_);
+        np.valid_=true;
+
+        laps_data_[lap][laps_data_[lap].size()-1]=np;
+
+        done=true;
+      }
+      else
+        laps_data_[lap].pop_back();
+    }
+  }
+  for(int lap=0; lap<(int)laps_data_.size(); lap++)
+  {
+    cout<<"Lap "<<lap<<": "<<laps_data_[lap][laps_data_[lap].size()-1].time_-laps_data_[lap][0].time_<<endl;
+  }
 }
 TWSData::~TWSData()
 {
@@ -489,10 +548,11 @@ void TWSData::load_session_data_from_file(std::string& filename)
 void TWSData::split_into_laps()
 {
   int begin_lap=-1;
+  double t;
 
   for(int i=0; i<(int)sess_data_.size()-1; i++)
   {
-    if (crosses_finish_line(sess_data_[i].pos_, sess_data_[i+1].pos_))
+    if (crosses_finish_line(sess_data_[i].pos_, sess_data_[i+1].pos_, &t))
     {
       if (begin_lap>0)
       {
@@ -505,7 +565,7 @@ void TWSData::split_into_laps()
         }
         laps_data_.push_back(lap);
         
-        begin_lap=end_lap;
+        begin_lap=end_lap-1;
       }
       else
         begin_lap=((i-1)>0?i-1:0);
@@ -517,7 +577,7 @@ void TWSData::split_into_laps()
 
 //see if this segment crosses the start/finish line
 //------------------------------------------------------------------
-bool TWSData::crosses_finish_line(Vec2 &a1, Vec2 &a2)
+bool TWSData::crosses_finish_line(Vec2& a1, Vec2& a2, double* t)
 {
   if (len(a1-start_line_center)>350.0) //data point has to be within 350 feet of center of track, that is more than any amount of gps drift possible
     return false;
@@ -529,9 +589,10 @@ bool TWSData::crosses_finish_line(Vec2 &a1, Vec2 &a2)
   Vec2 s2(b2-b1);
 
   //double s=(-s1[1]*(a1[0]-b1[0])+s1[0]*(a1[1]-b1[1]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
-  double t=(s2[0]*(a1[1]-b1[1])-s2[1]*(a1[0]-b1[0]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
+  (*t)=(s2[0]*(a1[1]-b1[1])-s2[1]*(a1[0]-b1[0]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
 
-  return (t>=0 && t<=1);
+  //cout<<"cross finish line got value of "<<*t<<endl;
+  return (*t>=0 && *t<=1);
 }
 
 
