@@ -608,10 +608,10 @@ void TWSData::load_lap_data_from_file(std::string &filename)
 //------------------------------------------------------------------
 void TWSData::render()
 {
-  left_.render();
-  right_.render();
-  island_.render();
-  start_.render();
+  //left_.render();
+  //right_.render();
+  //island_.render();
+  //start_.render();
 
   //render just the laps
   glLineWidth(1.0f);
