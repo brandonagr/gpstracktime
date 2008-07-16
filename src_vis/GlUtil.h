@@ -24,7 +24,7 @@ GLuint LoadTexture(char *TexName);
 //==========================================================
 struct LineSeg
 {
-  float r,g,b;
+  double r,g,b;
   Vec3 p0,p1;
 
   LineSeg()
@@ -39,7 +39,7 @@ struct LineSeg
      p0(begin),
      p1(end)
   {}
-  LineSeg(Vec3 begin, Vec3 end, float nr, float ng, float nb)
+  LineSeg(Vec3 begin, Vec3 end, double nr, double ng, double nb)
     :r(nr),
      g(ng),
      b(nb),
@@ -88,7 +88,7 @@ struct AABB
       max_[2]=p[2];
   }
 
-  inline void grow(float d)
+  inline void grow(double d)
   {
     min_[0]-=d;
     min_[1]-=d;
@@ -136,7 +136,7 @@ struct CollReport
   bool collision_;
   Vec3 pos_;
   Vec3 norm_;
-  float t_;
+  double t_;
 
   CollReport():collision_(false)
   {}
@@ -166,16 +166,16 @@ private:
   AABB bbox_;
 
   bool is_sphere_;
-  float radius_;
-  float radius_sq_;
+  double radius_;
+  double radius_sq_;
 
 
-  void load_from_filestream(std::ifstream& input, float load_scale);
+  void load_from_filestream(std::ifstream& input, double load_scale);
 
 public:
   static void load_meshobjects(std::string filename, std::vector<MeshObject>& obj_list);
 
-  MeshObject(std::ifstream& input, float scale=1.0f); //build by reading in data from ifstream
+  MeshObject(std::ifstream& input, double scale=1.0f); //build by reading in data from ifstream
 
   void render();
   void render_bbox();
@@ -209,12 +209,12 @@ private:
   Vec3 cam_dir_;
   Vec3 cam_up_;
 
-  float focallength_;
-  float aperture_;
-  float eyesep_;
+  double focallength_;
+  double aperture_;
+  double eyesep_;
 
-  float ry_, rx_; //rotation around lookat position
-  float dist_;  
+  double ry_, rx_; //rotation around lookat position
+  double dist_;  
 
   void calcCamPos(); //calculate cam_pos, cam_dir, from cam_lookat
 
@@ -223,15 +223,15 @@ public:
   ~Camera();
 
   void setupParams(int width, int height);
-  void setupCamPos(float rx, float ry, float dist, Vec3 lookat);
+  void setupCamPos(double rx, double ry, double dist, Vec3 lookat);
 
   void moveLookAt(Vec3 dmove);
   void setLookAt(Vec3 pos);
-  void rotateCam(float dry, float drx);
-  void moveCamDist(float ddist);
+  void rotateCam(double dry, double drx);
+  void moveCamDist(double ddist);
 
-  void moveDrive(float dx, float dy);
-  void moveUp(float dy);
+  void moveDrive(double dx, double dy);
+  void moveUp(double dy);
 
   void set_proj();
 

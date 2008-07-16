@@ -83,11 +83,11 @@ void App::init()
 
 
 
-  //GLfloat ambient[4] = {0.2f, 0.2f, 0.2f, 1.0};
-  //GLfloat specular[4] = {0.4f, 0.4f, 0.4f, 1.0f};
+  //GLdouble ambient[4] = {0.2f, 0.2f, 0.2f, 1.0};
+  //GLdouble specular[4] = {0.4f, 0.4f, 0.4f, 1.0f};
 
-  //GLfloat light_ambient[4]  = {0.6f, 0.2f, 0.2f, 1.0f};
-  //GLfloat light_pos[4]  = {0,25,0,1};
+  //GLdouble light_ambient[4]  = {0.6f, 0.2f, 0.2f, 1.0f};
+  //GLdouble light_pos[4]  = {0,25,0,1};
   
 
   //glEnable(GL_LIGHTING);
@@ -227,7 +227,7 @@ void App::set_window(int width, int height)
 
 // Process one frame
 //-------------------------------------------------------------------------------
-void App::frame(float dt)
+void App::frame(double dt)
 {     
 //Update Stuff
   //Move Camera
@@ -306,10 +306,9 @@ void App::frame(float dt)
 
 //Render an actual frame
 //-------------------------------------------------------------------------------
-void App::render_frame(float dt)
+void App::render_frame(double dt)
 {
 //Draw the origin
-  /*
   glBegin(GL_LINES);
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]);
@@ -323,7 +322,7 @@ void App::render_frame(float dt)
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]);
     glVertex3f(cam_.lookat()[0],cam_.lookat()[1],cam_.lookat()[2]+2.0f);
   glEnd();
-  */
+  
 
   //drawText("Click/Drag to move cam:",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-12);  
   //drawText("Middle - Zoom",GLUT_BITMAP_HELVETICA_10, 0,0,0, 2,window_height_-24);
@@ -331,9 +330,9 @@ void App::render_frame(float dt)
 /*
   //display fps
   {
-    static float time=0.0f;
+    static double time=0.0f;
     static int frame_count=0;
-    static float last_fps=0.0f;
+    static double last_fps=0.0f;
     frame_count++;
     time+=dt;
     if (time>0.5f)
@@ -351,7 +350,7 @@ void App::render_frame(float dt)
 
   //Draw track stuff  
   glColor3f(1.0f,1.0f,1.0f);
-
+/*
   for(int i=0; i<16; i++)
   {
     glBindTexture(GL_TEXTURE_2D, tex[i]);
@@ -380,7 +379,7 @@ void App::render_frame(float dt)
 
 
   }
-  
+  */
     
     
     
@@ -518,6 +517,13 @@ void App::keypress(unsigned char key)
     }
     break;
 
+  case 'T':
+  case 't':
+    {
+      trackdata_.test(Vec2(cam_.lookat()[0],cam_.lookat()[2]));
+    }
+    break;
+
    case 'n':
     angle[active_chunk]+=0.001;
     //calc_reset_whole();
@@ -595,7 +601,7 @@ void App::keypress(int key)
 
 // Draw some text, found this code in a nehe tutorial
 //-------------------------------------------------------------------------------
-void App::drawText(const char *str, void *font, GLclampf r, GLclampf g, GLclampf b, GLfloat x, GLfloat y) 
+void App::drawText(const char *str, void *font, GLclampf r, GLclampf g, GLclampf b, GLdouble x, GLdouble y) 
 {
   /* font: font to use, e.g., GLUT_BITMAP_HELVETICA_10
      r, g, b: text colour

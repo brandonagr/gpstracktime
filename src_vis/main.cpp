@@ -52,7 +52,7 @@ void glutFrame(void)
 
   if (cur_t!=last_t)
   {
-    app->frame((cur_t-last_t)/(float)CLOCKS_PER_SEC);
+    app->frame((cur_t-last_t)/(double)CLOCKS_PER_SEC);
     last_t=cur_t;
   }
 }

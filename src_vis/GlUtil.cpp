@@ -88,14 +88,14 @@ void MeshObject::load_meshobjects(std::string filename, std::vector<MeshObject>&
 
 // MeshObject Constructor
 //-------------------------------------------------------------------------------
-MeshObject::MeshObject(std::ifstream& input, float scale)
+MeshObject::MeshObject(std::ifstream& input, double scale)
 {
   load_from_filestream(input,scale);  
 }
 
 // load from Milkshape ASCII file
 //-------------------------------------------------------------------------------
-void MeshObject::load_from_filestream(std::ifstream& input, float load_scale)
+void MeshObject::load_from_filestream(std::ifstream& input, double load_scale)
 {
   if (!input.is_open())
     throw AppError("WTF ARE YOU DOING?");
@@ -178,7 +178,7 @@ void MeshObject::load_from_filestream(std::ifstream& input, float load_scale)
 //-------------------------------------------------------------------------------
 void MeshObject::render()
 {	
-  GLfloat vert[3];
+  GLdouble vert[3];
   for(TriIter t=tridata_.begin(); t!=tridata_.end(); t++)
   {
     glNormal3dv(t->normal_.Ref());
@@ -195,7 +195,7 @@ void MeshObject::render()
       vert[1]=verts_[t->vert_i_[i]][1];
       vert[2]=verts_[t->vert_i_[i]][2];
 
-      glVertex3fv(vert);
+      glVertex3dv(vert);
     }
   }  
 }
@@ -266,7 +266,7 @@ CollReport MeshObject::collide_lineseg(LineSeg& line)
   
   Vec3 u, v; //triangle vectors
   Vec3 dir, w0, w; //ray vectors
-  float a, b;
+  double a, b;
   CollReport c;
 
   Vec3 g1,g2,g3,g4;
@@ -304,7 +304,7 @@ CollReport MeshObject::collide_lineseg(LineSeg& line)
     // is I inside T?
     u=p1-p0;
     v=p2-p0;
-    float    uu, uv, vv, wu, wv, D;
+    double    uu, uv, vv, wu, wv, D;
     uu = dot(u,u);
     uv = dot(u,v);
     vv = dot(v,v);
@@ -314,7 +314,7 @@ CollReport MeshObject::collide_lineseg(LineSeg& line)
     D = uv * uv - uu * vv;
 
     // get and test parametric coords
-    float su, tu;
+    double su, tu;
     su = (uv * wv - vv * wu) / D;
     if (su < 0.0 || su > 1.0)        // I is outside T
         continue;
@@ -348,7 +348,7 @@ Vec3 MeshObject::get_cog()
   Vec3 avg(0);
   for(int i=0; i<(int)verts_.size();i++)
     avg+=verts_[i];
-  return avg/(float)verts_.size();
+  return avg/(double)verts_.size();
 }
 Vec3 MeshObject::get_first_normal()
 {
@@ -375,7 +375,7 @@ Camera::Camera()
   }
   else
   {
-    float temp;
+    double temp;
     config>>aperture_>>focallength_>>temp;
     eyesep_=focallength_/temp;
 
@@ -402,7 +402,7 @@ void Camera::setupParams(int width, int height)
 //-------------------------------------------------
 // set up camera position
 //-------------------------------------------------
-void Camera::setupCamPos(float rx, float ry, float dist, Vec3 lookat)
+void Camera::setupCamPos(double rx, double ry, double dist, Vec3 lookat)
 {
   cam_lookat_=lookat;
   
@@ -420,7 +420,7 @@ void Camera::setupCamPos(float rx, float ry, float dist, Vec3 lookat)
 //-------------------------------------------------
 void Camera::calcCamPos()
 {  
-  float cX=cos(rx_)*dist_;
+  double cX=cos(rx_)*dist_;
   cam_pos_[0]=cam_lookat_[0]+cX*sin(ry_);
   cam_pos_[1]=cam_lookat_[1]+sin(rx_)*dist_;
   cam_pos_[2]=cam_lookat_[2]+cX*-cos(ry_);
@@ -444,7 +444,7 @@ void Camera::setLookAt(Vec3 pos)
 //-------------------------------------------------
 // rotate camera
 //-------------------------------------------------
-void Camera::rotateCam(float dry, float drx)
+void Camera::rotateCam(double dry, double drx)
 {
   ry_+=dry;
   rx_+=drx;
@@ -458,7 +458,7 @@ void Camera::rotateCam(float dry, float drx)
 //-------------------------------------------------
 // move distance of camera
 //-------------------------------------------------
-void Camera::moveCamDist(float ddist)
+void Camera::moveCamDist(double ddist)
 {
 
   dist_+=ddist*0.5*dist_;
@@ -471,12 +471,12 @@ void Camera::moveCamDist(float ddist)
 //-------------------------------------------------
 // Drive the camera around
 //-------------------------------------------------
-void Camera::moveDrive(float dx, float dy)
+void Camera::moveDrive(double dx, double dy)
 {
   //drive along x/z plane
 
-  float sY=sin(ry_);
-  float cY=cos(ry_);
+  double sY=sin(ry_);
+  double cY=cos(ry_);
   
   if (dy)
   {
@@ -505,7 +505,7 @@ void Camera::moveDrive(float dx, float dy)
 //-------------------------------------------------
 // Drive the camera around
 //-------------------------------------------------
-void Camera::moveUp(float dy)
+void Camera::moveUp(double dy)
 {
 	cam_lookat_[1]+=dy;
 }
@@ -632,7 +632,7 @@ Vec3 Camera::get_ray_from_click(int x, int y)
   double mvmatrix[16];
   double projmatrix[16];
   int viewport[4];
-  double dX, dY, dZ, dClickY; // glUnProject uses doubles, but I'm using floats for these 3D vectors
+  double dX, dY, dZ, dClickY; // glUnProject uses doubles, but I'm using doubles for these 3D vectors
 
   glGetIntegerv(GL_VIEWPORT, viewport);	
   glGetDoublev (GL_MODELVIEW_MATRIX, mvmatrix);

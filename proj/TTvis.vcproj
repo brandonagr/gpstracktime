@@ -224,7 +224,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\SVLConfig.h"
+				RelativePath="..\src_vis\SVLConfig.h"
 				>
 			</File>
 		</Filter>

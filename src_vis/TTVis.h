@@ -30,8 +30,8 @@ public:
   void keypress(int key);
   
   //run and draw one frame
-  void frame(float dt);  
-  void render_frame(float dt);  
+  void frame(double dt);  
+  void render_frame(double dt);  
 
 private:
 
@@ -73,7 +73,7 @@ private:
   bool fresh_move_;
 
   //Utility class to draw text
-  void drawText(const char *str, void *font, GLclampf r, GLclampf g, GLclampf b, GLfloat x, GLfloat y);
+  void drawText(const char *str, void *font, GLclampf r, GLclampf g, GLclampf b, GLdouble x, GLdouble y);
 };
 
 #endif

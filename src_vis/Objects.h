@@ -38,6 +38,13 @@ public:
 
   void print_closest(Vec2& pos);
 
+  bool on_inside(Vec2& p);
+  inline double is_left(Vec2& p0, Vec2& p1, Vec2& p2){return ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]));}
+  inline Vec2 project_onto(Vec2& p0, Vec2& p1, Vec2& p);
+
+  Vec2 project_onto_linestrip(Vec2& p);
+  double distance_from_segment(Vec2& p0, Vec2& p1, Vec2& p);
+
   Vec2 get_average();
   void center_on(const Vec2& pos);
   void flip_y();
@@ -110,6 +117,9 @@ private:
   LineStrip island_;
   LineStrip start_;
 
+  bool is_outside_right(Vec2& p);
+  bool is_inside_left(Vec2& p); 
+
   
 
   //load and setup the texture to use somewhere in here as well
@@ -117,6 +127,15 @@ private:
 public:
   TWSData(std::string filename);
   ~TWSData();
+
+  void test(Vec2& p)
+  {
+    //std::cout<<"on_inside left: "<<left_.on_inside(p)<<std::endl;
+    //std::cout<<"on_inside right: "<<right_.on_inside(p)<<std::endl;
+    Vec2 track_p(right_.project_onto_linestrip(p));
+
+    std::cout<<"old p "<<p<<" new p "<<track_p<<" dist "<<len(track_p-p)<<std::endl;
+  }
 
   void load_data(std::string& filename);
 

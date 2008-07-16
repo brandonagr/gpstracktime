@@ -74,6 +74,88 @@ void LineStrip::print_closest(Vec2& pos)
   cout<<best_index+1<<" at "<<best_dist<<endl;
 }
 
+// test if a point is inside a closed loop
+//------------------------------------------------------------------
+bool LineStrip::on_inside(Vec2& p)
+{
+	if (!loop_)
+    return false;
+	  
+  int wn=0;
+  Vec2& p0=Vec2();
+  Vec2& p1=Vec2();
+
+  for(int i=0; i<(int)data_.size(); i++)
+  {
+    p0=data_[i];
+    if ((i+1)==data_.size())
+      p1=data_[0];
+    else
+      p1=data_[i+1];
+
+    if (p0[1] <= p[1])
+    {
+      if (p1[1] > p[1])
+        if (is_left( p0, p1, p) >= 0 )
+          ++wn;
+    }
+    else
+    {                       
+      if (p1[1] <= p[1])
+        if (is_left( p0, p1, p) <= 0)
+          --wn;
+    }
+  }
+
+  return (wn!=0);
+}
+
+// project a point onto this linestrip by finding closest line segment to it
+//------------------------------------------------------------------
+Vec2 LineStrip::project_onto_linestrip(Vec2& p)
+{
+  double best_d=999999999.0;
+  int best_i=-1;
+  int best_j=-1;
+
+  for(int i=0; i<(int)data_.size(); i++)
+  {
+    int j=i+1;
+    if (j==data_.size())
+      j=0;
+
+    double d=distance_from_segment(data_[i],data_[j],p);
+    if (d<best_d)
+    {
+      best_d=d;
+      best_i=i;
+      best_j=j;
+    }
+  }
+
+  return project_onto(data_[best_i],data_[best_j],p);
+}
+// get distance from segment to point
+//------------------------------------------------------------------
+double LineStrip::distance_from_segment(Vec2& p0, Vec2& p1, Vec2 &p)
+{  
+  return len(project_onto(p0,p1,p)-p);
+}
+Vec2 LineStrip::project_onto(Vec2 &p0, Vec2 &p1, Vec2 &p)
+{
+  double l=len(p1-p0);
+  
+  if (l==0.0f)
+    return p0;
+  
+  double u=((p[0] - p0[0])*(p1[0] - p0[0])+(p[1] - p0[1])*(p1[1] - p0[1])) / (l*l);
+  
+  if (u<0.0)u=0.0;
+  if (u>1.0)u=1.0;
+
+  return p0+u*(p1-p0);  
+}
+
 
 // center on average position
 //------------------------------------------------------------------
@@ -304,10 +386,46 @@ TWSData::TWSData(std::string filename)
   start_.center_on(origin_offset_feet);
   start_.flip_y();
 
-/*
+
   load_session_data_from_file(filename);
   split_into_laps();
-*/
+
+  
+  double error;
+  int iter=0;
+
+  do
+  {
+    Vec2 correction(0.0,0.0);
+    int count=0;
+
+    //analyze laps
+    for(int i=0; i<(int)laps_data_[0].size(); i++)
+    {
+      if (is_outside_right(laps_data_[0][i].pos_))
+      {
+        Vec2 track_p(right_.project_onto_linestrip(laps_data_[0][i].pos_));
+        correction+=track_p-laps_data_[0][i].pos_;
+        count++;
+        //cout<<"Point "<<i<<" is to right by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
+      }
+      else if (is_inside_left(laps_data_[0][i].pos_))
+      {
+        Vec2 track_p(left_.project_onto_linestrip(laps_data_[0][i].pos_));
+        correction+=track_p-laps_data_[0][i].pos_;
+        count++;
+        //cout<<"Point "<<i<<" is to left by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
+      }
+    }
+    correction/=count;
+    error=len(correction);
+    correction*=0.5;
+    iter++;
+    cout<<"Iter "<<iter<<" Correction is "<<correction<<endl;
+    for(int i=0; i<(int)laps_data_[0].size(); i++)
+      laps_data_[0][i].pos_+=correction;
+  }
+  while(error>0.1 && iter<100);
 }
 TWSData::~TWSData()
 {
@@ -406,8 +524,8 @@ bool TWSData::crosses_finish_line(Vec2 &a1, Vec2 &a2)
   Vec2 s1(a2-a1);
   Vec2 s2(b2-b1);
 
-  //float s=(-s1[1]*(a1[0]-b1[0])+s1[0]*(a1[1]-b1[1]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
-  float t=(s2[0]*(a1[1]-b1[1])-s2[1]*(a1[0]-b1[0]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
+  //double s=(-s1[1]*(a1[0]-b1[0])+s1[0]*(a1[1]-b1[1]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
+  double t=(s2[0]*(a1[1]-b1[1])-s2[1]*(a1[0]-b1[0]))/(-s2[0]*s1[1]+s1[0]*s2[1]);
 
   return (t>=0 && t<=1);
 }
@@ -429,5 +547,34 @@ void TWSData::render()
   right_.render();
   island_.render();
   start_.render();
+
+  //render just the first lap
+  glBegin(GL_POINTS);
+
+  Vec3 t;
+  glPointSize(3.0f);
+  glColor3f(0,0,1);
+  
+  for(int i=0; i<(int)laps_data_[0].size(); i++)
+  {
+    t=Vec3(laps_data_[0][i].pos_[0],0.0,laps_data_[0][i].pos_[1]);
+    glVertex3dv(t.Ref());
+  }
+
+  glEnd();
 }
+
+// test where a point is located
+//------------------------------------------------------------------
+bool TWSData::is_inside_left(Vec2& p)
+{
+  return left_.on_inside(p);
+}
+bool TWSData::is_outside_right(Vec2& p)
+{
+  return !right_.on_inside(p);
+}
+
+// 
+//------------------------------------------------------------------
 

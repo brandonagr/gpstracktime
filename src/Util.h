@@ -117,7 +117,7 @@ struct PrettyTime
       output<<min_<<":";
       output.width(2);
       output<<(int)sec_<<".";
-      int decimal=(int)((sec_-(float)((int)sec_))*100.0f);
+      int decimal=(int)((sec_-(double)((int)sec_))*100.0f);
       output.width(2);
       output<<decimal;
     }
