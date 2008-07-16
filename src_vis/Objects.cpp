@@ -390,42 +390,44 @@ TWSData::TWSData(std::string filename)
   load_session_data_from_file(filename);
   split_into_laps();
 
-  
-  double error;
-  int iter=0;
-
-  do
+  for(int lap=0; lap<(int)laps_data_.size(); lap++)
   {
-    Vec2 correction(0.0,0.0);
-    int count=0;
+    double error;
+    int iter=0;
 
-    //analyze laps
-    for(int i=0; i<(int)laps_data_[0].size(); i++)
+    do
     {
-      if (is_outside_right(laps_data_[0][i].pos_))
+      Vec2 correction(0.0,0.0);
+      int count=0;
+
+      //analyze laps
+      for(int i=0; i<(int)laps_data_[lap].size(); i++)
       {
-        Vec2 track_p(right_.project_onto_linestrip(laps_data_[0][i].pos_));
-        correction+=track_p-laps_data_[0][i].pos_;
-        count++;
-        //cout<<"Point "<<i<<" is to right by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
+        if (is_outside_right(laps_data_[lap][i].pos_))
+        {
+          Vec2 track_p(right_.project_onto_linestrip(laps_data_[lap][i].pos_));
+          correction+=track_p-laps_data_[lap][i].pos_;
+          count++;
+          //cout<<"Point "<<i<<" is to right by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
+        }
+        else if (is_inside_left(laps_data_[lap][i].pos_))
+        {
+          Vec2 track_p(left_.project_onto_linestrip(laps_data_[lap][i].pos_));
+          correction+=track_p-laps_data_[lap][i].pos_;
+          count++;
+          //cout<<"Point "<<i<<" is to left by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
+        }
       }
-      else if (is_inside_left(laps_data_[0][i].pos_))
-      {
-        Vec2 track_p(left_.project_onto_linestrip(laps_data_[0][i].pos_));
-        correction+=track_p-laps_data_[0][i].pos_;
-        count++;
-        //cout<<"Point "<<i<<" is to left by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
-      }
+      correction/=count;
+      error=len(correction);
+      correction*=0.75;
+      iter++;
+      //cout<<"Iter "<<iter<<" Correction is "<<correction<<endl;
+      for(int i=0; i<(int)laps_data_[lap].size(); i++)
+        laps_data_[lap][i].pos_+=correction;
     }
-    correction/=count;
-    error=len(correction);
-    correction*=0.5;
-    iter++;
-    cout<<"Iter "<<iter<<" Correction is "<<correction<<endl;
-    for(int i=0; i<(int)laps_data_[0].size(); i++)
-      laps_data_[0][i].pos_+=correction;
+    while(error>0.05 && iter<50);
   }
-  while(error>0.1 && iter<100);
 }
 TWSData::~TWSData()
 {
@@ -502,6 +504,8 @@ void TWSData::split_into_laps()
           lap.push_back(sess_data_[j]);
         }
         laps_data_.push_back(lap);
+        
+        begin_lap=end_lap;
       }
       else
         begin_lap=((i-1)>0?i-1:0);
@@ -548,20 +552,33 @@ void TWSData::render()
   island_.render();
   start_.render();
 
-  //render just the first lap
-  glBegin(GL_POINTS);
+  //render just the laps
+  glLineWidth(1.0f);
+  
 
   Vec3 t;
-  glPointSize(3.0f);
-  glColor3f(0,0,1);
   
-  for(int i=0; i<(int)laps_data_[0].size(); i++)
+
+  srand(101);
+  
+  for(int lap=0; lap<(int)laps_data_.size(); lap++)
   {
-    t=Vec3(laps_data_[0][i].pos_[0],0.0,laps_data_[0][i].pos_[1]);
-    glVertex3dv(t.Ref());
+    float r=(float)rand()/RAND_MAX;
+    float g=(float)rand()/RAND_MAX;
+    float b=(float)rand()/RAND_MAX;
+
+    glColor3f(r,g,b);
+    glBegin(GL_LINE_STRIP);
+  
+    for(int i=0; i<(int)laps_data_[lap].size(); i++)
+    {
+      t=Vec3(laps_data_[lap][i].pos_[0],0.0,laps_data_[lap][i].pos_[1]);
+      glVertex3dv(t.Ref());
+    }
+    glEnd();
   }
 
-  glEnd();
+  
 }
 
 // test where a point is located

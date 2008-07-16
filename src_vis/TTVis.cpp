@@ -22,7 +22,7 @@ App::App(int wx, int wy, bool stereo)
   mouse_delta_(0,0),
   fresh_move_(false),
 
-  trackdata_("./gps_record s4.txt"),//,Vec3(1,0,0)),
+  trackdata_("./gps_record s2.txt"),//,Vec3(1,0,0)),
 /*
   offx_(-992),
   offy_(-535),
@@ -350,7 +350,7 @@ void App::render_frame(double dt)
 
   //Draw track stuff  
   glColor3f(1.0f,1.0f,1.0f);
-/*
+
   for(int i=0; i<16; i++)
   {
     glBindTexture(GL_TEXTURE_2D, tex[i]);
@@ -379,7 +379,7 @@ void App::render_frame(double dt)
 
 
   }
-  */
+  
     
     
     
