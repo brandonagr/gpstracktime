@@ -6,12 +6,21 @@ using namespace std;
 
 void main()
 {
-  /*
-  GPSLogger logger("logger_settings.txt");
-
-  logger.run_logging();
-  */
+  try
+  {
+    GPSLogger logger("logger_settings.txt");
+    logger.run_logging();
+  }
+  catch(exception& e)
+  {
+    cout<<"Critical failure - "<<e.what()<<endl;
+    cout<<"Sorry try again!"<<endl;
+    string wait;
+    getline(cin,wait);    
+  }
+    
   
+  /*
   GPSData point1(std::string("$GPRMC,230119.000,A,3032.2971,N,09613.3961,W,0.00,,280608,,,A*61"));
   GPSData point2(std::string("$GPRMC,232337.000,A,3032.2960,N,09613.3967,W,0.00,,280608,,,A*6B"));
 
@@ -28,4 +37,5 @@ void main()
   cout<<point1<<endl<<point2<<endl;
   cout<<point1.state_x_<<" "<<point1.state_y_<<" "<<point1.time_.get_seconds()<<endl;
   cout<<point2.state_x_<<" "<<point2.state_y_<<" "<<point2.time_.get_seconds()<<endl;
+  */
 }

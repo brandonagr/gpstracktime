@@ -16,11 +16,12 @@ GPSLogger::GPSLogger(std::string params_filename)
 
 void GPSLogger::run_logging()
 {
-  std::cout<<"Beginning logging..."<<std::endl;
+  cout<<"Waiting to start logging..."<<endl;
 
   LARGE_INTEGER freq_, prev_time_, this_time_;   
 
   double dt,prev_dt;
+  double time_since_fix=0;
   QueryPerformanceFrequency(&freq_);
   double freq_inv_=1/(double)freq_.QuadPart;
   QueryPerformanceCounter(&prev_time_);  
@@ -34,8 +35,20 @@ void GPSLogger::run_logging()
   {
     QueryPerformanceCounter(&this_time_); //calc dt
     dt = double(this_time_.QuadPart-prev_time_.QuadPart) * freq_inv_;
-    prev_time_=this_time_;    
-    
+    prev_time_=this_time_;
+    time_since_fix+=dt;
+
+    if (time_since_fix>10.0) //dead man's timer expired, tell user something is up
+    {
+      cout<<endl<<endl<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl<<"Hopelessly lost GPS fix... You need to fix something!"<<endl;
+
+      if (dump_data())
+        cout<<"Well some data was saved, but program is about to terminate..."<<endl;
+        
+      string wait;
+      getline(cin,wait);
+      exit(0);
+    }    
 
     string linedata=gps_.get_gps_line(dt);    
     if (linedata.size()>0 && GPSData::is_GPRMC(linedata)) //new position update has come in
@@ -46,6 +59,8 @@ void GPSLogger::run_logging()
       
       if (gpspos_.valid_)
       {
+        time_since_fix=0.0; //reset dead mans timer
+
         if (in_session)
         {
           //make sure speed is still above 35
@@ -54,19 +69,8 @@ void GPSLogger::run_logging()
             cout<<"no longer in session!"<<endl;
             in_session=false;
 
-            if (gps_lines_.size()>0) //dump all data to file
-            {
-              std::string file(params_.get<std::string>("GPSSaveFile"));
-              ofstream out(file.c_str(),ios::app);
-
-              for(vector<string>::const_iterator i=gps_lines_.begin(); i!=gps_lines_.end(); i++)
-              {
-                out<<*i<<endl;
-              }
-
-              gps_lines_.clear();
-            }
-            cout<<"dumped content!"<<endl;
+            if (dump_data())
+              cout<<"dumped content to file!"<<endl;          
           }
           else
           {
@@ -101,7 +105,21 @@ void GPSLogger::run_logging()
     
     prev_dt=dt;
   }
+}
 
+bool GPSLogger::dump_data()
+{
+  if (gps_lines_.size()==0)
+    return false;
+  std::string file(params_.get<std::string>("GPSSaveFile"));
+  ofstream out(file.c_str(),ios::app);
 
+  for(vector<string>::const_iterator i=gps_lines_.begin(); i!=gps_lines_.end(); i++)
+  {
+    out<<*i<<endl;
+  }
 
+  gps_lines_.clear();
+
+  return true;
 }

@@ -176,22 +176,12 @@ GPSUtil::GPSUtil(Params& params)
   }
   else //use actual gps
   {
-    try
-    {
-      if (!gpsport_.OpenPort(params.get<std::string>("GPSPort")))
-        throw(exception("Failed to open port!"));
-      if (!gpsport_.ConfigurePort(CBR_4800,8,true,NOPARITY,ONESTOPBIT))
-        throw(exception("Failed to configure port!"));
-      if (!gpsport_.SetCommunicationTimeouts(500,100,1,0,0))
-        throw(exception("Failed to set timeouts on port!"));
-    }
-    catch(exception e)
-    {
-      std::cout<<"Failed to open com port: "<<e.what()<<std::endl;
-
-    }
-
-    
+    if (!gpsport_.OpenPort(params.get<std::string>("GPSPort")))
+      throw(exception("Failed to open port!"));
+    if (!gpsport_.ConfigurePort(CBR_4800,8,true,NOPARITY,ONESTOPBIT))
+      throw(exception("Failed to configure port!"));
+    if (!gpsport_.SetCommunicationTimeouts(500,100,1,0,0))
+      throw(exception("Failed to set timeouts on port!"));
   }
 }
 

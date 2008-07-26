@@ -13,6 +13,8 @@ private:
   GPSUtil gps_;
   std::vector<std::string> gps_lines_;
 
+  bool dump_data();
+
 public:
   GPSLogger(std::string params_filename);
 
