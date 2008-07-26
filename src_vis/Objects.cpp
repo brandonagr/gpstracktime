@@ -6,14 +6,10 @@
 using namespace std;
 
 
-//Global values
-const Vec2 origin_offset_feet(52003804.092942, 36644507.955591);
+//Global values for aligning data / landmarks
+//===================================================================
+const Vec2 origin_offset_feet(52003804.092942, 36644507.955591); //origin set in state plane feet
 
-
-//52004214.579549 36644546.649679 //original positions
-//52004151.514680 36644575.508395
-//410.486607, -38.694088 //positions aligned with y flipped
-//347.421738, -67.552804
 const Vec2 start_line_left(347.421738, -67.552804);
 const Vec2 start_line_right(410.486607, -38.694088);
 const Vec2 start_line_center(378.9541725, -53.123446);
@@ -32,13 +28,10 @@ LineStrip::LineStrip(std::string filename, Vec3& color, bool loop)
   if (!datafile.is_open())
     throw AppError("Unable to open LineStrip file!");
 
-
-  //Assume file is in the format:
-  /*
+  /* Assume file is in the format:
     36644528.208180 52003935.431540 82919.000000
     36644528.208180 52003935.431540 82920.000000
   */
- 
   double t,x,y;
 
   while(!datafile.eof())
@@ -47,7 +40,6 @@ LineStrip::LineStrip(std::string filename, Vec3& color, bool loop)
 
     data_.push_back(Vec2(x,y));       
   }
-
   datafile.close();
 }
 
@@ -58,7 +50,7 @@ void LineStrip::print_closest(Vec2& pos)
   double best_dist=999999999.0;
   int best_index=-1;
 
-  cout<<"find close to "<<pos<<endl;
+  cout<<"Find close to "<<pos<<" - "<<endl;
 
   for(int i=0; i<(int)data_.size(); i++)
   {
@@ -71,7 +63,7 @@ void LineStrip::print_closest(Vec2& pos)
     }
   }
 
-  cout<<best_index+1<<" at "<<best_dist<<endl;
+  cout<<"["<<best_index<<"] at "<<best_dist<<endl;
 }
 
 // test if a point is inside a closed loop
@@ -135,6 +127,7 @@ Vec2 LineStrip::project_onto_linestrip(Vec2& p)
 
   return project_onto(data_[best_i],data_[best_j],p);
 }
+
 // get distance from segment to point
 //------------------------------------------------------------------
 double LineStrip::distance_from_segment(Vec2& p0, Vec2& p1, Vec2 &p)
@@ -155,7 +148,6 @@ Vec2 LineStrip::project_onto(Vec2 &p0, Vec2 &p1, Vec2 &p)
 
   return p0+u*(p1-p0);  
 }
-
 
 // center on average position
 //------------------------------------------------------------------
@@ -208,6 +200,7 @@ void LineStrip::render()
 }
 
 
+//===================================================================
 
 // Constructor
 //------------------------------------------------------------------
@@ -220,14 +213,11 @@ LapDataPoint::LapDataPoint(std::string &line)
   /*
     Y	36644806.218739	52004078.937939	63.511518	192.370000	 21:31:12.00
     Y	36644893.090255	52004117.597392	64.363095	193.140000	 21:31:13.00
-
-    Y	36644893.090255	52004117.597392	64.363095	193.140000	 21:31:13.00 derived_vel
-    Y	36644893.090255	52004117.597392	64.363095	193.140000	 21:31:13.00
   */
   
   if (parts.size()!=6)
   {
-    cout<<"size is "<<parts.size()<<" on string "<<line<<endl;
+    cout<<"Size is "<<parts.size()<<" on string "<<line<<endl;
     throw AppError("Invalid string passed to LapDataPoint constructor");
   }
 
@@ -244,6 +234,7 @@ LapDataPoint::LapDataPoint(std::string &line)
 }
 
 
+//===================================================================
 
 // Constructor
 //------------------------------------------------------------------
@@ -282,58 +273,74 @@ LapData::LapData(std::string filename, Vec3& color)
   data_[data_.size()-1].derived_vel_=data_[data_.size()-2].derived_vel_;
 }
 
-// get index of closest point
+// set lap time
 //------------------------------------------------------------------
-void LapData::print_closest(Vec2& pos)
+void LapData::calc_lap_time()
 {
-  double best_dist=999999999.0;
-  int best_index=-1;
+  lap_time_=data_[data_.size()-1].time_-data_[0].time_;
+}
 
-  cout<<"find close to "<<pos<<endl;
+// hermite interpolation from http://www.cubic.org/docs/hermite.htm
+//------------------------------------------------------------------
+void LapData::interpolate(int steps)
+{
+  std::vector<LapDataPoint> new_data;
 
-  for(int i=0; i<(int)data_.size(); i++)
+  //precompute the basis function
+  double* h1=new double[steps];
+  double* h2=new double[steps];
+  double* h3=new double[steps];
+  double* h4=new double[steps];
+  for(int t=0; t<steps; t++)
   {
-    double d=len(data_[i].pos_-pos);
+    double s = (double)t / (double)steps;    // scale s to go from 0 to 1
 
-    if (d<best_dist)
+    h1[t] =  2*pow(s,3) - 3*pow(s,2) + 1;          // calculate basis function 1
+    h2[t] = -2*pow(s,3) + 3*pow(s,2);              // calculate basis function 2
+    h3[t] =   pow(s,3) - 2*pow(s,2) + s;         // calculate basis function 3
+    h4[t] =   pow(s,3) -  pow(s,2);              // calculate basis function 4
+  }
+
+  for(int i=0; i<(int)data_.size()-1; i++)
+  {
+    //interpolate from data_[i] up to but not including data_[i+1]
+
+    for(int t=0; t<steps; t++)
     {
-      best_dist=d;
-      best_index=i;
+      double s = (double)t / (double)steps;    // scale s to go from 0 to 1
+
+      Vec2 pos= data_[i].pos_*h1[t] +
+                data_[i+1].pos_*h2[t] +
+                data_[i].derived_vel_*h3[t] +
+                data_[i+1].derived_vel_*h4[t];
+      
+      //linearly interpolate other things
+      double time=data_[i].time_.get_seconds()+s*(data_[i+1].time_-data_[i].time_).get_seconds();
+      double speed=data_[i].speed_+s*(data_[i+1].speed_-data_[i].speed_);
+      double bearing=data_[i].bearing_+s*(data_[i+1].bearing_-data_[i].bearing_);
+
+      new_data.push_back(LapDataPoint(time,pos,speed,bearing,Vec2(0,0)));
     }
   }
 
-  cout<<best_index+1<<" at "<<best_dist<<endl;
+  delete[] h1;
+  delete[] h2;
+  delete[] h3;
+  delete[] h4;
+
+  new_data.push_back(data_.back()); //include the very last point
+
+  cout<<"went from "<<data_.size()<<" datapoints to ";
+  data_=new_data;
+  cout<<data_.size()<<endl;
+
 }
-
-
-// center on average position
-//------------------------------------------------------------------
-Vec2 LapData::get_average()
-{
-  double x=0.0;
-  double y=0.0;
-  for(int i=0; i<(int)data_.size(); i++)
-  {
-    x+=data_[i].pos_[0];
-    y+=data_[i].pos_[1];
-  }
-  x/=(double)data_.size();
-  y/=(double)data_.size();
-
-  return Vec2(x,y);
-}
-void LapData::move(Vec2& dx)
-{
-  cout<<"move "<<dx<<endl;
-  for(int i=0; i<(int)data_.size(); i++)
-    data_[i].pos_+=dx;
-}
-
 
 // Render the data
 //------------------------------------------------------------------
 void LapData::render()
 {
+/*
   glBegin(GL_POINTS);
 
   Vec3 t;
@@ -347,23 +354,24 @@ void LapData::render()
   }
 
   glEnd();
-
+*/
   
   glBegin(GL_LINES);
 
+  Vec3 t;
   Vec3 t2;
   glColor3f(0,1,0);
   
-  for(int i=0; i<(int)data_.size(); i++)
+  for(int i=0; i<(int)data_.size()-1; i++)
   {
     t=Vec3(data_[i].pos_[0],0.0,data_[i].pos_[1]);
-    t2=Vec3(data_[i].pos_[0]+data_[i].derived_vel_[0],0.0,data_[i].pos_[1]+data_[i].derived_vel_[1]);
+    //t2=Vec3(data_[i].pos_[0]+data_[i].derived_vel_[0],0.0,data_[i].pos_[1]+data_[i].derived_vel_[1]);
+    t2=Vec3(data_[i+1].pos_[0],0.0,data_[i+1].pos_[1]);
     glVertex3dv(t.Ref());
     glVertex3dv(t2.Ref());
   }
 
-  glEnd();
-  
+  glEnd();  
 }
 
 
@@ -371,11 +379,11 @@ void LapData::render()
 
 // Constructor
 //------------------------------------------------------------------
-TWSData::TWSData(std::string filename)
-: left_("./vis_data/track_data/left_corrected.dat",Vec3(0,0,0)),
-  right_("./vis_data/track_data/right_corrected.dat",Vec3(0,0,0)),
-  island_("./vis_data/track_data/island_corrected.dat",Vec3(0,0,0)),
-  start_("./vis_data/track_data/start_corrected.dat",Vec3(0,0.75f,0),false)
+TWSData::TWSData()
+: left_("./vis_data/tws_data/left_corrected.dat",Vec3(0,0,0)),
+  right_("./vis_data/tws_data/right_corrected.dat",Vec3(0,0,0)),
+  island_("./vis_data/tws_data/island_corrected.dat",Vec3(0,0,0)),
+  start_("./vis_data/tws_data/start_corrected.dat",Vec3(0,0.75f,0),false)
 {
   left_.center_on(origin_offset_feet);
   left_.flip_y();
@@ -386,62 +394,170 @@ TWSData::TWSData(std::string filename)
   start_.center_on(origin_offset_feet);
   start_.flip_y();
 
+  for(int i=0; i<16; i++)
+    tex[i]=0;
+}
+TWSData::~TWSData()
+{
+  for(int i=0; i<16; i++)
+    glDeleteTextures(1,&tex[i]);
+}
 
-  load_session_data_from_file(filename);
-  split_into_laps();
+// load texture information
+//------------------------------------------------------------------
+void TWSData::load_textures()
+{
+  //most of this info was found by experiment and is now hardcoded
+  for(int i=0; i<16; i++)
+  {
+    std::stringstream str;
 
-  for(int lap=0; lap<(int)laps_data_.size(); lap++)
+    str<<"vis_data/tws_data/"<<i<<".tga";
+
+    tex[i]=LoadTexture((char*)str.str().c_str());
+  }
+
+  origin_x_=-50.0;
+  origin_y_=1240.0;
+  angle_=3.37159;
+  scale_=1024.0;
+  for(int i=0; i<16; i++)
+  {    
+    angle[i]=0.0;
+    scale[i]=2.0;
+  }
+
+  offset_x[0]=-7;
+  offset_y[0]=3;
+  offset_x[1]=6;
+  offset_y[1]=-3;
+  offset_x[2]=3;
+  offset_y[2]=1;
+  offset_x[3]=0;
+  offset_y[3]=0;
+  offset_x[4]=-2;
+  offset_y[4]=-1;
+  offset_x[5]=16;
+  offset_y[5]=-6;
+  offset_x[6]=11;
+  offset_y[6]=-8;
+  offset_x[7]=15;
+  offset_y[7]=1;
+  offset_x[8]=2;
+  offset_y[8]=1;
+  offset_x[9]=-4;
+  offset_y[9]=-7;
+  offset_x[10]=0;
+  offset_y[10]=-8;
+  offset_x[11]=-3;
+  offset_y[11]=-9;
+  offset_x[12]=18;
+  offset_y[12]=-6;
+  offset_x[13]=5;
+  offset_y[13]=-23;
+  offset_x[14]=1;
+  offset_y[14]=-23;
+  offset_x[15]=0;
+  offset_y[15]=-21;
+
+  angle[0]=0.004;
+  angle[1]=-0.008;
+  angle[2]=0.0;
+  angle[3]=0.0;
+  angle[4]=-0.001;
+  angle[5]=0.0;
+  angle[6]=0.006;
+  angle[7]=-0.021;
+  angle[8]=0.009;
+  angle[9]=0.004;
+  angle[10]=-0.014;
+  angle[11]=-0.005;
+  angle[12]=0.015;
+  angle[13]=0.006;
+  angle[14]=0.001;
+  angle[15]=-0.003;
+
+  scale[10]=1.99798;
+  scale[12]=2.02615;
+  scale[14]=2.00397;
+
+
+  double dx_horiz=cos(angle_)*scale_;
+  double dx_vert=sin(angle_)*scale_;
+  double dy_horiz=cos(angle_+PI_/2.0)*scale_;
+  double dy_vert=sin(angle_+PI_/2.0)*scale_;
+
+  for(int i=0; i<16; i++)
+  {
+    int x_i=(i%4);
+    int y_i=(i/4);    
+
+    pos_x[i]=origin_x_+x_i*dx_horiz+y_i*dy_horiz;
+    pos_y[i]=origin_y_+x_i*dx_vert+y_i*dy_vert;
+  }
+}
+
+// load session data from file
+//------------------------------------------------------------------
+void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& aligned_laps)
+{
+  //load data from text file and get rough laps
+  LapData raw_sess(filename, Vec3(1.0,0.0,0.0));
+  LapDataArray laps_data(split_into_rough_laps(raw_sess));
+
+  //perform alignment on a per lap basis  
+  for(int lap=0; lap<(int)laps_data.size(); lap++)
   {
     double error;
     int iter=0;
+
+    std::vector<LapDataPoint>& lap_data(laps_data[lap].data_);
 
     do
     {
       Vec2 correction(0.0,0.0);
       int count=0;
-
-      //analyze laps
-      for(int i=0; i<(int)laps_data_[lap].size(); i++)
+      
+      for(int i=0; i<(int)lap_data.size(); i++)
       {
-        if (is_outside_right(laps_data_[lap][i].pos_))
+        if (is_outside_right(lap_data[i].pos_)) //calc vector needed to move this point to inside the track
         {
-          Vec2 track_p(right_.project_onto_linestrip(laps_data_[lap][i].pos_));
-          correction+=track_p-laps_data_[lap][i].pos_;
+          Vec2 track_p(right_.project_onto_linestrip(lap_data[i].pos_));
+          correction+=track_p-lap_data[i].pos_;
           count++;
-          //cout<<"Point "<<i<<" is to right by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
         }
-        else if (is_inside_left(laps_data_[lap][i].pos_))
+        else if (is_inside_left(lap_data[i].pos_)) //calc vector needed to move this point to inside the track
         {
-          Vec2 track_p(left_.project_onto_linestrip(laps_data_[lap][i].pos_));
-          correction+=track_p-laps_data_[lap][i].pos_;
+          Vec2 track_p(left_.project_onto_linestrip(lap_data[i].pos_));
+          correction+=track_p-lap_data[i].pos_;
           count++;
-          //cout<<"Point "<<i<<" is to left by "<<len(track_p-laps_data_[0][i].pos_)<<endl;
         }
       }
       correction/=count;
       error=len(correction);
-      correction*=0.75;
+      correction*=0.66; //move only most of the way to avoid jumping over the actual solution
       iter++;
-      //cout<<"Iter "<<iter<<" Correction is "<<correction<<endl;
-      for(int i=0; i<(int)laps_data_[lap].size(); i++)
-        laps_data_[lap][i].pos_+=correction;
+      
+      for(int i=0; i<(int)lap_data.size(); i++)
+        lap_data[i].pos_+=correction;
     }
     while(error>0.05 && iter<50);
   }
   
-
-  //now cut each lap to the start/finish line
-  for(int lap=0; lap<(int)laps_data_.size(); lap++)
+  //now cut each aligned lap to the start/finish line precisely
+  for(int lap=0; lap<(int)laps_data.size(); lap++)
   {    
     double t;
     bool done=false;
-    while(!done) //get the start of the lap
+    std::vector<LapDataPoint>& lap_data(laps_data[lap].data_);
+
+    while(!done) //cut the beginning of the lap
     {
-      LapDataPoint& p0=laps_data_[lap][0];
-      LapDataPoint& p1=laps_data_[lap][1];
+      LapDataPoint& p0=lap_data[0];
+      LapDataPoint& p1=lap_data[1];
       if (crosses_finish_line(p0.pos_,p1.pos_,&t))
       {
-        //new point is p0+t*(p1-p0) //linearly interpolate everything
+        //new point is p0+t*(p1-p0) //linearly interpolate everything, TODO: if worrted about less than .1 second accuracy this needs to be changed!
         LapDataPoint np;
 
         np.time_=PrettyTime( p0.time_.get_seconds()+t*(p1.time_.get_seconds()-p0.time_.get_seconds()) );
@@ -451,21 +567,21 @@ TWSData::TWSData(std::string filename)
         np.derived_vel_=p0.derived_vel_+t*(p1.derived_vel_-p0.derived_vel_);
         np.valid_=true;
 
-        laps_data_[lap][0]=np;
+        lap_data[0]=np;
 
         done=true;
       }
       else
-        laps_data_[lap].erase(laps_data_[lap].begin());
+        lap_data.erase(lap_data.begin());
     }
     done=false;
-    while(!done) //get the end of the lap
+    while(!done) //cut the end of the lap
     {
-      LapDataPoint& p0=laps_data_[lap][laps_data_[lap].size()-2];
-      LapDataPoint& p1=laps_data_[lap][laps_data_[lap].size()-1];
+      LapDataPoint& p0=lap_data[lap_data.size()-2];
+      LapDataPoint& p1=lap_data[lap_data.size()-1];
       if (crosses_finish_line(p0.pos_,p1.pos_,&t))
       {
-        //new point is p0+t*(p1-p0) //linearly interpolate everything
+        //new point is p0+t*(p1-p0) //linearly interpolate everything, TODO: if worrted about less than .1 second accuracy this needs to be changed!
         LapDataPoint np;
 
         np.time_=PrettyTime( p0.time_.get_seconds()+t*(p1.time_.get_seconds()-p0.time_.get_seconds()) );
@@ -475,95 +591,51 @@ TWSData::TWSData(std::string filename)
         np.derived_vel_=p0.derived_vel_+t*(p1.derived_vel_-p0.derived_vel_);
         np.valid_=true;
 
-        laps_data_[lap][laps_data_[lap].size()-1]=np;
+        lap_data[lap_data.size()-1]=np;
 
         done=true;
       }
       else
-        laps_data_[lap].pop_back();
+        lap_data.pop_back();
     }
   }
-  for(int lap=0; lap<(int)laps_data_.size(); lap++)
+
+  for(int lap=0; lap<(int)laps_data.size(); lap++)
   {
-    cout<<"Lap "<<lap<<": "<<laps_data_[lap][laps_data_[lap].size()-1].time_-laps_data_[lap][0].time_<<endl;
+    laps_data[lap].calc_lap_time();
+    laps_data[lap].interpolate(4); //make the data look smoother at least
+
+    cout<<"Lap "<<lap<<": "<<laps_data[lap].lap_time_<<endl;
+
+    aligned_laps.push_back(laps_data[lap]);
   }
-}
-TWSData::~TWSData()
-{
-  
-}
-
-// load either entire session or individual lap data
-//------------------------------------------------------------------
-void TWSData::load_data(std::string &filename)
-{
-  if (filename.substr(-4)==".txt")
-    load_session_data_from_file(filename);
-  if (filename.substr(-5)==".laps")
-    load_lap_data_from_file(filename);
-
-  cout<<"Unknown file format, not loading anything..."<<endl;
-}
-
-
-// load session data from file
-//------------------------------------------------------------------
-void TWSData::load_session_data_from_file(std::string& filename)
-{
-  //load data from session data file
-  ifstream datafile(filename.c_str());
-
-  if (!datafile.is_open())
-    throw AppError("Unable to open LapData file!");
- 
-  std::string line;
-
-  while(!datafile.eof())
-  {
-    getline(datafile,line);
-    sess_data_.push_back(LapDataPoint(line));       
-  }
-
-  datafile.close();
-
-  if (sess_data_.size()<3)
-    throw AppError("Not enough points loaded in LapData!");
-
-  for(int i=1; i<(int)sess_data_.size()-1; i++)
-  {
-    //derive
-    sess_data_[i].derived_vel_=Vec2(0,0);
-
-    sess_data_[i].derived_vel_+=sess_data_[i+1].pos_-sess_data_[i].pos_;
-    sess_data_[i].derived_vel_+=sess_data_[i].pos_-sess_data_[i-1].pos_;
-
-    sess_data_[i].derived_vel_*=0.5;
-  }
-  sess_data_[0].derived_vel_=sess_data_[1].derived_vel_;
-  sess_data_[sess_data_.size()-1].derived_vel_=sess_data_[sess_data_.size()-2].derived_vel_;
 }
 
 //split session data into laps
 //------------------------------------------------------------------
-void TWSData::split_into_laps()
+LapDataArray TWSData::split_into_rough_laps(LapData& raw_sess)
 {
+  LapDataArray raw_laps;
+
   int begin_lap=-1;
   double t;
+  std::vector<LapDataPoint>& sdata(raw_sess.data_); //alias to make code more readable
 
-  for(int i=0; i<(int)sess_data_.size()-1; i++)
+  for(int i=0; i<(int)sdata.size()-1; i++)
   {
-    if (crosses_finish_line(sess_data_[i].pos_, sess_data_[i+1].pos_, &t))
+    if (crosses_finish_line(sdata[i].pos_, sdata[i+1].pos_, &t))
     {
       if (begin_lap>0)
       {
+        raw_laps.push_back(LapData());
+        LapData& lap(raw_laps.back());
+
         //there is a lap from begin_lap to i+1
-        std::vector<LapDataPoint> lap;
-        int end_lap=((i+1)>=(int)sess_data_.size()?(int)sess_data_.size()-1:i+1);
+        int end_lap=((i+1)>=(int)sdata.size()?(int)sdata.size()-1:i+1);
         for(int j=begin_lap; j<=end_lap; j++)
         {
-          lap.push_back(sess_data_[j]);
+          lap.data_.push_back(sdata[j]);
         }
-        laps_data_.push_back(lap);
         
         begin_lap=end_lap-1;
       }
@@ -572,7 +644,9 @@ void TWSData::split_into_laps()
     }
   }
 
-  cout<<"Split into "<<laps_data_.size()<<" laps"<<endl;
+  cout<<"Split into "<<raw_laps.size()<<" laps"<<endl;
+
+  return raw_laps;
 }
 
 //see if this segment crosses the start/finish line
@@ -595,27 +669,29 @@ bool TWSData::crosses_finish_line(Vec2& a1, Vec2& a2, double* t)
   return (*t>=0 && *t<=1);
 }
 
-
-// load laps data from file
+// test where a point is located
 //------------------------------------------------------------------
-void TWSData::load_lap_data_from_file(std::string &filename)
+bool TWSData::is_inside_left(Vec2& p)
 {
-  cout<<"Not implemented!"<<endl;
+  return left_.on_inside(p);
+}
+bool TWSData::is_outside_right(Vec2& p)
+{
+  return !right_.on_inside(p);
 }
 
-
-// render all the data
+// render
 //------------------------------------------------------------------
-void TWSData::render()
+void TWSData::render_edges()
 {
-  //left_.render();
-  //right_.render();
-  //island_.render();
-  //start_.render();
+  left_.render();
+  right_.render();
+  island_.render();
+  start_.render();
 
+  /*
   //render just the laps
-  glLineWidth(1.0f);
-  
+  glLineWidth(1.0f);  
 
   Vec3 t;
   
@@ -638,20 +714,41 @@ void TWSData::render()
     }
     glEnd();
   }
-
-  
+  */  
 }
-
-// test where a point is located
-//------------------------------------------------------------------
-bool TWSData::is_inside_left(Vec2& p)
+void TWSData::render_texture()
 {
-  return left_.on_inside(p);
+  glColor3f(1.0f,1.0f,1.0f);
+
+  for(int i=0; i<16; i++)
+  {
+    glBindTexture(GL_TEXTURE_2D, tex[i]);
+
+    double ang=angle_+angle[i]-PI_/4.0;//-PI_/2.0;
+    
+    Vec2 p1(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p2(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p3(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;
+    Vec2 p4(pos_x[i]+offset_x[i]+256.0*1.414213562*scale[i]*cos(ang), 
+            pos_y[i]+offset_y[i]+256.0*1.414213562*scale[i]*sin(ang));
+    ang+=PI_/2.0;    
+
+    glBegin(GL_QUADS);
+      glTexCoord2f(1.0f,0.0f); glVertex3f(p1[0], 0.0f, p1[1]);
+      glTexCoord2f(1.0f,1.0f); glVertex3f(p2[0], 0.0f, p2[1]);
+      glTexCoord2f(0.0f,1.0f); glVertex3f(p3[0], 0.0f, p3[1]);
+      glTexCoord2f(0.0f,0.0f); glVertex3f(p4[0], 0.0f, p4[1]);
+     glEnd();
+  }
 }
-bool TWSData::is_outside_right(Vec2& p)
-{
-  return !right_.on_inside(p);
-}
+
+
 
 // 
 //------------------------------------------------------------------

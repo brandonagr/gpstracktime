@@ -20,7 +20,7 @@ GLuint LoadTexture(char *TexName)
   // Load our Texture
   if(Img.Load(TexName)!=IMG_OK)
   {
-    cout<<"FAIL"<<endl;
+    cout<<"FAIL to load texture"<<endl;
     return 0;
   }
 
@@ -364,10 +364,10 @@ Vec3 MeshObject::get_first_normal()
 //-------------------------------------------------
 Camera::Camera()
 {
-  std::ifstream config("data/config/camera.txt");
+  std::ifstream config("./vis_data/camera.txt");
   if (!config.is_open())
   {
-    std::cout<<"Could not open data/config/camera.txt, loading camera defaults"<<std::endl;
+    std::cout<<"Could not open ./vis_data/camera.txt, loading camera defaults"<<std::endl;
 
     aperture_=50.0f;
     focallength_=70.0f;

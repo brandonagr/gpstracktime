@@ -6,23 +6,6 @@
 #include "Util.h"
 #include "GlUtil.h"
 
-//need to load all of the lap data
-//split into laps
-//save lap data into files
-//should each lap be inside a class
-
-
-// l - load lap data
-// s - load a session, split into laps, auto align laps, save summary data
-
-//check for crossing finish line:
-// if point is within 300 feet of center of finish
-
-
-// different class to hold session data and to hold laps loaded from file?
-
-
-
 
 // series of datapoints making up a line strip
 //===================================================================
@@ -33,17 +16,17 @@ private:
   Vec3 color_;
   bool loop_;
 
-public:
-  LineStrip(std::string filename, Vec3& color, bool loop=true);
-
-  void print_closest(Vec2& pos);
-
-  bool on_inside(Vec2& p);
   inline double is_left(Vec2& p0, Vec2& p1, Vec2& p2){return ((p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]));}
   inline Vec2 project_onto(Vec2& p0, Vec2& p1, Vec2& p);
-
-  Vec2 project_onto_linestrip(Vec2& p);
   double distance_from_segment(Vec2& p0, Vec2& p1, Vec2& p);
+
+public:
+  LineStrip(std::string filename, Vec3& color, bool loop=true);  
+
+  bool on_inside(Vec2& p);  
+  Vec2 project_onto_linestrip(Vec2& p);
+  
+  void print_closest(Vec2& pos);
 
   Vec2 get_average();
   void center_on(const Vec2& pos);
@@ -83,69 +66,79 @@ struct LapDataPoint
 };
 
 
-//Holds all of the data for a given run
+//Holds all of the data for a single lap
 //===================================================================
 class LapData
 {
-private:
+protected:
   std::vector<LapDataPoint> data_;
+  PrettyTime lap_time_;
   Vec3 color_;
+
+  //utility functions used by TWSData when constructing LapDatas
+  void calc_lap_time();
+  void interpolate(int steps);
 
 public:
   LapData(std::string filename, Vec3& color);
-
-  void print_closest(Vec2& pos);
-
-  Vec2 get_average();
-
-  void move(Vec2& dx);
-
+  LapData()
+    :color_(1.0, 0.0, 0.0)
+  {};
+ 
   void render();
+
+
+  friend class TWSData;
 };
 
+//Hold a bunch of laps in just an array
+//===================================================================
+typedef std::vector<LapData> LapDataArray;
 
-//Holds all of the data for a session and then splits it into laps
+//Holds all data for TWS and is used to split up session data into laps
 //===================================================================
 class TWSData
 {
 private:
-  std::vector<LapDataPoint> sess_data_;
-  std::vector<std::vector<LapDataPoint> > laps_data_;
-
   LineStrip left_;
   LineStrip right_;
   LineStrip island_;
   LineStrip start_;
 
+// Texture information, for rendering track
+  GLuint tex[16];
+  double origin_x_;
+  double origin_y_;
+  double angle_;
+  double scale_;
+
+  double pos_x[16];
+  double pos_y[16];
+
+  double offset_x[16];
+  double offset_y[16];
+  double angle[16];
+  double scale[16];
+//-------------------------------  
+
+  //utility functions for testing if a point is inside the track
   bool is_outside_right(Vec2& p);
   bool is_inside_left(Vec2& p); 
-
   
-
-  //load and setup the texture to use somewhere in here as well
-
-public:
-  TWSData(std::string filename);
-  ~TWSData();
-
-  void test(Vec2& p)
-  {
-    //std::cout<<"on_inside left: "<<left_.on_inside(p)<<std::endl;
-    //std::cout<<"on_inside right: "<<right_.on_inside(p)<<std::endl;
-    Vec2 track_p(right_.project_onto_linestrip(p));
-
-    std::cout<<"old p "<<p<<" new p "<<track_p<<" dist "<<len(track_p-p)<<std::endl;
-  }
-
-  void load_data(std::string& filename);
-
-  void load_session_data_from_file(std::string& filename);  
-  void split_into_laps();
+  //utility functions used to split raw session into laps
+  LapDataArray split_into_rough_laps(LapData& raw_sess);
   bool crosses_finish_line(Vec2& a1, Vec2& a2, double* t);
 
-  void load_lap_data_from_file(std::string& filename);
+public:
+  TWSData();
+  ~TWSData();
 
-  void render();
+  void load_textures();
+
+  void render_texture();
+  void render_edges(); //draw edge of track
+
+  void split_raw_session_into_laps(std::string filename, LapDataArray& aligned_laps); //load session data from filename and append cleaned/aligned laps to LapDataArray
 };
 
 

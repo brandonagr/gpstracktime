@@ -69,7 +69,7 @@ struct PrettyTime
     else
       {pos1=2;pos2=4;}
 
-    while(setstring.substr(0,1)==" ")//remove leading whitespaces
+    while(setstring.at(0)<'0' || setstring.at(0)>'9')//remove leading non numerals
       setstring=setstring.substr(1);
 
     std::stringstream conv;
@@ -309,7 +309,7 @@ template <>
 inline std::string Params::get(const std::string name)
 {
 if (params_.find(name)==params_.end())
-  throw std::exception();//"Unable to find value in Params.get");
+  throw std::exception();
 
 return params_[name];
 }
