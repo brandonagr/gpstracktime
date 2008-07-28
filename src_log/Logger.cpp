@@ -55,7 +55,7 @@ void GPSLogger::run_logging()
     {
       GPSData gpspos_=GPSData(linedata);
 
-      cout<<gpspos_<<endl;
+      //cout<<gpspos_<<endl;
       
       if (gpspos_.valid_)
       {
