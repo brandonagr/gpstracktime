@@ -510,6 +510,7 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
   {
     double error;
     int iter=0;
+    Vec2 final_correction(0);
 
     std::vector<LapDataPoint>& lap_data(laps_data[lap].data_);
 
@@ -537,11 +538,15 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
       error=len(correction);
       correction*=0.66; //move only most of the way to avoid jumping over the actual solution
       iter++;
+
+      final_correction+=correction;
       
       for(int i=0; i<(int)lap_data.size(); i++)
         lap_data[i].pos_+=correction;
     }
     while(error>0.05 && iter<50);
+
+    cout<<"Final correction was "<<final_correction<<endl;
   }
   
   //now cut each aligned lap to the start/finish line precisely

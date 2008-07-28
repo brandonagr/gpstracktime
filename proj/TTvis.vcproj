@@ -232,6 +232,10 @@
 			Name="Misc"
 			>
 			<File
+				RelativePath="..\bin\vis_data\settings.txt"
+				>
+			</File>
+			<File
 				RelativePath="..\src\Util.cpp"
 				>
 			</File>

@@ -36,6 +36,8 @@ void App::reset()
   
   laps_.clear();
   trackdata_.split_raw_session_into_laps(params_.get<std::string>("SessionData"), laps_);
+
+  draw_lap_=laps_.begin();
 }
 
 // Destructor
@@ -61,7 +63,7 @@ void App::init()
 
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-  glLineWidth(2.0f);
+  glLineWidth(1.0f);
 
   /*
   glEnable(GL_POLYGON_SMOOTH); 
@@ -217,10 +219,24 @@ void App::render_frame(double dt)
 
 
   //render track
-  trackdata_.render_texture();
-  laps_[0].render();
-  
+  //trackdata_.render_texture();  
+  trackdata_.render_edges();  
+  draw_lap_->render();
 
+  if (test_d[0]!=0.0 && test_d[1]!=0.0)
+  {
+    glBegin(GL_LINES);
+
+    glColor3f(1.0, 0.0, 0.0);
+
+    Vec3 i(test_d[0], 0.0, test_d[1]);
+    Vec3 j(cam_.lookat()[0], 0.0, cam_.lookat()[2]);
+
+    glVertex3dv(i.Ref());
+    glVertex3dv(j.Ref());
+
+    glEnd();
+  }  
 
   //display current time
   /*
@@ -314,6 +330,30 @@ void App::keypress(unsigned char key)
 { 
   switch(key)
   {  
+  case ' ':
+    draw_lap_++;
+    if (draw_lap_==laps_.end())
+      draw_lap_=laps_.begin();    
+    break;
+
+  case 'c':
+  case 'C':
+    test_d=0;
+    break;
+  case 'd':
+  case 'D':
+    {
+      Vec2 cur(cam_.lookat()[0],cam_.lookat()[2]);
+
+      if (test_d[0]!=0.0 && test_d[1]!=0.0)
+      {
+        cout<<"Distance: "<<len(test_d-cur)<<endl;
+      }
+
+      test_d=cur;
+    }
+    break;
+
   case 'R':
   case 'r':
       reset();      
