@@ -74,18 +74,25 @@ protected:
   std::vector<LapDataPoint> data_;
   PrettyTime lap_time_;
   Vec3 color_;
+  bool enabled_;
 
   //utility functions used by TWSData when constructing LapDatas
-  void calc_lap_time();
   void interpolate(int steps);
 
 public:
   LapData(std::string filename, Vec3& color);
   LapData()
-    :color_(1.0, 0.0, 0.0)
+    :color_(1.0, 0.0, 0.0),
+     enabled_(false)
   {};
  
   void render();
+
+  void set_enabled(){enabled_=!enabled_;}  
+  PrettyTime lap_time();
+
+  void set_color(float r, float g, float b){color_=Vec3(r,g,b);}
+  Vec3 color(){return color_;}
 
 
   friend class TWSData;

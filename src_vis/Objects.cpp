@@ -273,13 +273,6 @@ LapData::LapData(std::string filename, Vec3& color)
   data_[data_.size()-1].derived_vel_=data_[data_.size()-2].derived_vel_;
 }
 
-// set lap time
-//------------------------------------------------------------------
-void LapData::calc_lap_time()
-{
-  lap_time_=data_[data_.size()-1].time_-data_[0].time_;
-}
-
 // hermite interpolation from http://www.cubic.org/docs/hermite.htm
 //------------------------------------------------------------------
 void LapData::interpolate(int steps)
@@ -301,7 +294,9 @@ void LapData::interpolate(int steps)
     h4[t] =   pow(s,3) -  pow(s,2);              // calculate basis function 4
   }
 
-  for(int i=0; i<(int)data_.size()-1; i++)
+  new_data.push_back(data_.front()); //preserve first one so it doesn't do wierd things if it's shorter than typical
+
+  for(int i=1; i<(int)data_.size()-1; i++)
   {
     //interpolate from data_[i] up to but not including data_[i+1]
 
@@ -340,6 +335,8 @@ void LapData::interpolate(int steps)
 //------------------------------------------------------------------
 void LapData::render()
 {
+  if (!enabled_)
+    return;
 /*
   glBegin(GL_POINTS);
 
@@ -358,9 +355,10 @@ void LapData::render()
   
   glBegin(GL_LINES);
 
+  glColor3d(color_[0],color_[1],color_[2]);
+
   Vec3 t;
   Vec3 t2;
-  glColor3f(0,1,0);
   
   for(int i=0; i<(int)data_.size()-1; i++)
   {
@@ -373,6 +371,17 @@ void LapData::render()
 
   glEnd();  
 }
+
+// Get lap time
+//------------------------------------------------------------------
+PrettyTime LapData::lap_time()
+{
+  if (lap_time_.get_seconds()==0.0 && (int)data_.size()>1)
+    lap_time_=data_[data_.size()-1].time_-data_[0].time_;
+
+  return lap_time_;
+}
+
 
 
 //===================================================================
@@ -544,12 +553,13 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
       for(int i=0; i<(int)lap_data.size(); i++)
         lap_data[i].pos_+=correction;
     }
-    while(error>0.05 && iter<50);
+    while(error>0.1 && iter<25);
 
-    cout<<"Final correction was "<<final_correction<<endl;
+    cout<<"Final correction was "<<final_correction<<" after "<<iter<<" iterations."<<endl;
   }
   
   //now cut each aligned lap to the start/finish line precisely
+  
   for(int lap=0; lap<(int)laps_data.size(); lap++)
   {    
     double t;
@@ -607,10 +617,7 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
 
   for(int lap=0; lap<(int)laps_data.size(); lap++)
   {
-    laps_data[lap].calc_lap_time();
-    laps_data[lap].interpolate(4); //make the data look smoother at least
-
-    cout<<"Lap "<<lap<<": "<<laps_data[lap].lap_time_<<endl;
+    laps_data[lap].interpolate(3); //make the data look smoother at least
 
     aligned_laps.push_back(laps_data[lap]);
   }
@@ -689,6 +696,7 @@ bool TWSData::is_outside_right(Vec2& p)
 //------------------------------------------------------------------
 void TWSData::render_edges()
 {
+  glColor3f(0.7f, 0.7f, 0.7f);
   left_.render();
   right_.render();
   island_.render();

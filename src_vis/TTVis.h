@@ -37,7 +37,8 @@ private:
 
   TWSData trackdata_;
   LapDataArray laps_;
-  std::vector<LapData>::iterator draw_lap_;
+
+  int lap_pointer;
 
   Vec2 test_d;
 

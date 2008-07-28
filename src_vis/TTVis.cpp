@@ -37,7 +37,9 @@ void App::reset()
   laps_.clear();
   trackdata_.split_raw_session_into_laps(params_.get<std::string>("SessionData"), laps_);
 
-  draw_lap_=laps_.begin();
+  lap_pointer=0;
+  for(int i=0; i<(int)laps_.size(); i++)
+    laps_[i].set_color((double)rand()/RAND_MAX,(double)rand()/RAND_MAX,(double)rand()/RAND_MAX);
 }
 
 // Destructor
@@ -63,7 +65,7 @@ void App::init()
 
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-  glLineWidth(1.0f);
+  glLineWidth(0.5f);
 
   /*
   glEnable(GL_POLYGON_SMOOTH); 
@@ -217,12 +219,31 @@ void App::render_frame(double dt)
     drawText(fps.str().c_str(), GLUT_BITMAP_HELVETICA_10, 0.5f,0.5f,0.5f, window_width_-60,window_height_-12);
   }
 
+  //render track times
+  for(int i=0; i<(int)laps_.size(); i++)
+  {
+    std::stringstream time;
+
+    if (lap_pointer==i)
+      time<<">"<<laps_[i].lap_time();
+    else
+      time<<" "<<laps_[i].lap_time();
+
+    Vec3 col=laps_[i].color();
+    drawText(time.str().c_str(), GLUT_BITMAP_HELVETICA_10, col[0],col[1],col[2], 5,window_height_-((i+1)*12));
+  }
 
   //render track
   //trackdata_.render_texture();  
   trackdata_.render_edges();  
-  draw_lap_->render();
 
+  //render lap data
+  for(int i=0; i<(int)laps_.size(); i++)
+  {
+    laps_[i].render();
+  }
+
+  //render measure line
   if (test_d[0]!=0.0 && test_d[1]!=0.0)
   {
     glBegin(GL_LINES);
@@ -331,9 +352,7 @@ void App::keypress(unsigned char key)
   switch(key)
   {  
   case ' ':
-    draw_lap_++;
-    if (draw_lap_==laps_.end())
-      draw_lap_=laps_.begin();    
+    laps_[lap_pointer].set_enabled();   
     break;
 
   case 'c':
@@ -371,6 +390,17 @@ void App::keypress(int key)
 { 
   switch(key)
   {      
+
+  case GLUT_KEY_UP:
+    lap_pointer--;
+    if (lap_pointer<0)
+      lap_pointer=0;
+    break;
+  case GLUT_KEY_DOWN:
+    lap_pointer++;
+    if (lap_pointer==(int)laps_.size())
+      lap_pointer--;
+    break;
     
   case 27:
     exit(0);
