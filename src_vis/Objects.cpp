@@ -355,17 +355,24 @@ void LapData::render()
   
   glBegin(GL_LINES);
 
-  glColor3d(color_[0],color_[1],color_[2]);
-
+ 
   Vec3 t;
   Vec3 t2;
+  double amnt;  
   
   for(int i=0; i<(int)data_.size()-1; i++)
   {
     t=Vec3(data_[i].pos_[0],0.0,data_[i].pos_[1]);
     //t2=Vec3(data_[i].pos_[0]+data_[i].derived_vel_[0],0.0,data_[i].pos_[1]+data_[i].derived_vel_[1]);
     t2=Vec3(data_[i+1].pos_[0],0.0,data_[i+1].pos_[1]);
+
+    
+    amnt=(data_[i].speed_-slowest_speed_)/range_speed_;
+    glColor3d(color_[0]*amnt,color_[1]*amnt,color_[2]*amnt);
     glVertex3dv(t.Ref());
+
+    amnt=(data_[i+1].speed_-slowest_speed_)/range_speed_;
+    glColor3d(color_[0]*amnt,color_[1]*amnt,color_[2]*amnt);
     glVertex3dv(t2.Ref());
   }
 
@@ -380,6 +387,23 @@ PrettyTime LapData::lap_time()
     lap_time_=data_[data_.size()-1].time_-data_[0].time_;
 
   return lap_time_;
+}
+
+// calc fastest and slowest speed for rendering purposes
+//------------------------------------------------------------------
+void LapData::calc_high_low_speed()
+{
+  fastest_speed_=0.0;
+  slowest_speed_=99999999.0;
+
+  for(int i=0; i<(int)data_.size(); i++)
+  {
+    if (data_[i].speed_>fastest_speed_)
+      fastest_speed_=data_[i].speed_;
+    if (data_[i].speed_<slowest_speed_)
+      slowest_speed_=data_[i].speed_;
+  }
+  range_speed_=fastest_speed_-slowest_speed_;
 }
 
 
@@ -618,6 +642,7 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
   for(int lap=0; lap<(int)laps_data.size(); lap++)
   {
     laps_data[lap].interpolate(3); //make the data look smoother at least
+    laps_data[lap].calc_high_low_speed();
 
     aligned_laps.push_back(laps_data[lap]);
   }

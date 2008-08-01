@@ -72,6 +72,11 @@ class LapData
 {
 protected:
   std::vector<LapDataPoint> data_;
+
+  double fastest_speed_;
+  double slowest_speed_;
+  double range_speed_;
+
   PrettyTime lap_time_;
   Vec3 color_;
   bool enabled_;
@@ -90,6 +95,7 @@ public:
 
   void set_enabled(){enabled_=!enabled_;}  
   PrettyTime lap_time();
+  void calc_high_low_speed();
 
   void set_color(float r, float g, float b){color_=Vec3(r,g,b);}
   Vec3 color(){return color_;}
