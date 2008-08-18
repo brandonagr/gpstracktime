@@ -77,6 +77,7 @@ protected:
   double slowest_speed_;
   double range_speed_;
 
+  PrettyTime start_time_offset_; //beginning of lap in GPS time
   PrettyTime lap_time_;
   Vec3 color_;
   bool enabled_;
@@ -96,6 +97,8 @@ public:
   void set_enabled(){enabled_=!enabled_;}  
   PrettyTime lap_time();
   void calc_high_low_speed();
+
+  Vec2 get_pos_at_time(PrettyTime& t);
 
   void set_color(float r, float g, float b){color_=Vec3(r,g,b);}
   Vec3 color(){return color_;}

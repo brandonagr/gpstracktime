@@ -34,7 +34,7 @@ void App::reset()
 {  
   params_=Params("./vis_data/settings.txt"); //reload settings file
   
-  laps_.clear();
+  //laps_.clear();
   trackdata_.split_raw_session_into_laps(params_.get<std::string>("SessionData"), laps_);
 
   lap_pointer=0;

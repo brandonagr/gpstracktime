@@ -539,6 +539,7 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
   LapDataArray laps_data(split_into_rough_laps(raw_sess));
 
   //perform alignment on a per lap basis  
+  /*
   for(int lap=0; lap<(int)laps_data.size(); lap++)
   {
     double error;
@@ -581,9 +582,9 @@ void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& al
 
     cout<<"Final correction was "<<final_correction<<" after "<<iter<<" iterations."<<endl;
   }
+  */
   
   //now cut each aligned lap to the start/finish line precisely
-  
   for(int lap=0; lap<(int)laps_data.size(); lap++)
   {    
     double t;
