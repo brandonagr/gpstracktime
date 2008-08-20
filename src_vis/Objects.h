@@ -7,6 +7,23 @@
 #include "GlUtil.h"
 
 
+//A waypoint on the track
+//===================================================================
+struct Waypoint
+{
+  Vec2 pos_; //a point along the right side of the track
+  Vec2 left_dir_; //vector pointing perpendicularly across track from pos_
+  Vec3 color_;
+
+  Waypoint(){};
+  Waypoint(Vec2& pos, Vec2& ld)
+    :pos_(pos),
+     left_dir_(ld)
+  {}
+  void render();
+};
+
+
 // series of datapoints making up a line strip
 //===================================================================
 class LineStrip
@@ -27,6 +44,8 @@ public:
   Vec2 project_onto_linestrip(Vec2& p);
   
   void print_closest(Vec2& pos);
+  Waypoint get_closest_waypoint(Vec2& pos);
+  
 
   Vec2 get_average();
   void center_on(const Vec2& pos);
@@ -149,12 +168,14 @@ public:
   TWSData();
   ~TWSData();
 
+  void split_raw_session_into_laps(std::string filename, LapDataArray& aligned_laps); //load session data from filename and append cleaned/aligned laps to LapDataArray
+  Waypoint get_waypoint(Vec2& pos){return right_.get_closest_waypoint(pos);}; //get waypoint closest to this pos
+
+
   void load_textures();
 
   void render_texture();
   void render_edges(); //draw edge of track
-
-  void split_raw_session_into_laps(std::string filename, LapDataArray& aligned_laps); //load session data from filename and append cleaned/aligned laps to LapDataArray
 };
 
 

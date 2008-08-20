@@ -40,7 +40,11 @@ private:
 
   int lap_pointer;
 
+
+
   Vec2 test_d;
+  Waypoint test_w;
+
 
   
 

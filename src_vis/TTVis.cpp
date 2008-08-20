@@ -35,7 +35,7 @@ void App::reset()
   params_=Params("./vis_data/settings.txt"); //reload settings file
   
   //laps_.clear();
-  trackdata_.split_raw_session_into_laps(params_.get<std::string>("SessionData"), laps_);
+  //trackdata_.split_raw_session_into_laps(params_.get<std::string>("SessionData"), laps_);
 
   lap_pointer=0;
   for(int i=0; i<(int)laps_.size(); i++)
@@ -65,7 +65,7 @@ void App::init()
 
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-  glLineWidth(0.5f);
+  glLineWidth(1.0f);
 
   /*
   glEnable(GL_POLYGON_SMOOTH); 
@@ -102,6 +102,7 @@ void App::set_window(int width, int height)
 void App::frame(double dt)
 {     
 //Update Stuff
+
   //Move Camera
   if (fresh_move_ && len(mouse_delta_)>0.0f) //Look for camera updates
   {         
@@ -118,41 +119,29 @@ void App::frame(double dt)
     fresh_move_=false;
   }  
 
-/*
-  if (left_mouse_down_) //process a selection click
+
+
+
+  Vec3 vdir=cam_.get_ray_from_click((int)mouse_pos_[0],(int)mouse_pos_[1]);
+  Vec2 click_on_plane(0.0,0.0);
+  double t=-1.0;
+
+  if (cam_.pos()[1]>0 && vdir[1]<0) //camera is above the z=0 plane and ray is going towards ground
   {
-    //reset();
+    double t=-cam_.pos()[1]/vdir[1];
+            
+    click_on_plane[0]=cam_.pos()[0]+vdir[0]*t;
+    click_on_plane[1]=cam_.pos()[2]+vdir[2]*t;
 
-    Vec3 vdir=cam_.get_ray_from_click((int)mouse_pos_[0],(int)mouse_pos_[1]);
-    Vec2 click_on_plane(0.0,0.0);
+    //find closest point to location click_on_plane
+    //cout<<"location is: "<<click_on_plane<<endl;
+    test_w=trackdata_.get_waypoint(click_on_plane);
 
-    if (cam_.pos()[1]>0) //camera is above the z=0 plane
-    {
-      if (vdir[1]<0) //ray is going towards ground
-      {
-        double t=-cam_.pos()[1]/vdir[1];
-              
-        click_on_plane[0]=cam_.pos()[0]+vdir[0]*t;
-        click_on_plane[1]=cam_.pos()[2]+vdir[2]*t;
-      }
-    }
-    else
-    {
-      if (vdir[1]>0) //ray is going towards ground
-      {
-        double t=-cam_.pos()[1]/vdir[1];
-              
-        click_on_plane[0]=cam_.pos()[0]+vdir[0]*t;
-        click_on_plane[1]=cam_.pos()[2]+vdir[2]*t;
-      }
-    }     
-
-    //Vec3 t(click_on_plane[0],0.0,click_on_plane[1]);
-    //cam_.setLookAt(t);
-
-    left_mouse_down_=false;
   }
-*/
+
+  
+
+
 
   //do update of stuff 
 
@@ -236,6 +225,7 @@ void App::render_frame(double dt)
   //render track
   //trackdata_.render_texture();  
   trackdata_.render_edges();  
+  test_w.render();
 
   //render lap data
   for(int i=0; i<(int)laps_.size(); i++)

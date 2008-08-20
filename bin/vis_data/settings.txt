@@ -1,1 +1,1 @@
-SessionData ./gps_record_3.txt
+SessionData ./vis_data/session_data/august_17/gps_Record_2.txt

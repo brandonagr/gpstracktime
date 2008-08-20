@@ -17,6 +17,26 @@ const Vec2 start_line_center(378.9541725, -53.123446);
 
 //===================================================================
 
+
+
+
+// Render the data
+//------------------------------------------------------------------
+void Waypoint::render()
+{
+  glBegin(GL_LINES);
+
+  Vec3 v;
+
+  v=Vec3(pos_[0],0.0,pos_[1]);
+  glVertex3dv(v.Ref());
+  v=Vec3(pos_[0]+left_dir_[0]*50,0.0,pos_[1]+left_dir_[1]*50);
+  glVertex3dv(v.Ref());
+
+  glEnd();
+}
+
+
 // Constructor
 //------------------------------------------------------------------
 LineStrip::LineStrip(std::string filename, Vec3& color, bool loop)
@@ -64,6 +84,32 @@ void LineStrip::print_closest(Vec2& pos)
   }
 
   cout<<"["<<best_index<<"] at "<<best_dist<<endl;
+}
+
+// get waypoint closest to this point
+//------------------------------------------------------------------
+Waypoint LineStrip::get_closest_waypoint(Vec2& pos)
+{
+  double best_dist=999999999.0;
+  int best_index=-1;
+
+  for(int i=0; i<(int)data_.size(); i++)
+  {
+    double d=len(data_[i]-pos);
+
+    if (d<best_dist)
+    {
+      best_dist=d;
+      best_index=i;
+    }
+  }
+
+  int next=best_index+1;
+  if (next==(int)data_.size())
+    next=0;
+
+  Vec2 dir=norm(data_[next]-data_[best_index]);
+  return Waypoint(data_[best_index], Vec2(dir[1], -dir[0]));
 }
 
 // test if a point is inside a closed loop
@@ -436,100 +482,6 @@ TWSData::~TWSData()
     glDeleteTextures(1,&tex[i]);
 }
 
-// load texture information
-//------------------------------------------------------------------
-void TWSData::load_textures()
-{
-  //most of this info was found by experiment and is now hardcoded
-  for(int i=0; i<16; i++)
-  {
-    std::stringstream str;
-
-    str<<"vis_data/tws_data/"<<i<<".tga";
-
-    tex[i]=LoadTexture((char*)str.str().c_str());
-  }
-
-  origin_x_=-50.0;
-  origin_y_=1240.0;
-  angle_=3.37159;
-  scale_=1024.0;
-  for(int i=0; i<16; i++)
-  {    
-    angle[i]=0.0;
-    scale[i]=2.0;
-  }
-
-  offset_x[0]=-7;
-  offset_y[0]=3;
-  offset_x[1]=6;
-  offset_y[1]=-3;
-  offset_x[2]=3;
-  offset_y[2]=1;
-  offset_x[3]=0;
-  offset_y[3]=0;
-  offset_x[4]=-2;
-  offset_y[4]=-1;
-  offset_x[5]=16;
-  offset_y[5]=-6;
-  offset_x[6]=11;
-  offset_y[6]=-8;
-  offset_x[7]=15;
-  offset_y[7]=1;
-  offset_x[8]=2;
-  offset_y[8]=1;
-  offset_x[9]=-4;
-  offset_y[9]=-7;
-  offset_x[10]=0;
-  offset_y[10]=-8;
-  offset_x[11]=-3;
-  offset_y[11]=-9;
-  offset_x[12]=18;
-  offset_y[12]=-6;
-  offset_x[13]=5;
-  offset_y[13]=-23;
-  offset_x[14]=1;
-  offset_y[14]=-23;
-  offset_x[15]=0;
-  offset_y[15]=-21;
-
-  angle[0]=0.004;
-  angle[1]=-0.008;
-  angle[2]=0.0;
-  angle[3]=0.0;
-  angle[4]=-0.001;
-  angle[5]=0.0;
-  angle[6]=0.006;
-  angle[7]=-0.021;
-  angle[8]=0.009;
-  angle[9]=0.004;
-  angle[10]=-0.014;
-  angle[11]=-0.005;
-  angle[12]=0.015;
-  angle[13]=0.006;
-  angle[14]=0.001;
-  angle[15]=-0.003;
-
-  scale[10]=1.99798;
-  scale[12]=2.02615;
-  scale[14]=2.00397;
-
-
-  double dx_horiz=cos(angle_)*scale_;
-  double dx_vert=sin(angle_)*scale_;
-  double dy_horiz=cos(angle_+PI_/2.0)*scale_;
-  double dy_vert=sin(angle_+PI_/2.0)*scale_;
-
-  for(int i=0; i<16; i++)
-  {
-    int x_i=(i%4);
-    int y_i=(i/4);    
-
-    pos_x[i]=origin_x_+x_i*dx_horiz+y_i*dy_horiz;
-    pos_y[i]=origin_y_+x_i*dx_vert+y_i*dy_vert;
-  }
-}
-
 // load session data from file
 //------------------------------------------------------------------
 void TWSData::split_raw_session_into_laps(std::string filename, LapDataArray& aligned_laps)
@@ -707,6 +659,7 @@ bool TWSData::crosses_finish_line(Vec2& a1, Vec2& a2, double* t)
   return (*t>=0 && *t<=1);
 }
 
+
 // test where a point is located
 //------------------------------------------------------------------
 bool TWSData::is_inside_left(Vec2& p)
@@ -718,11 +671,107 @@ bool TWSData::is_outside_right(Vec2& p)
   return !right_.on_inside(p);
 }
 
+
+// load texture information
+//------------------------------------------------------------------
+void TWSData::load_textures()
+{
+  //most of this info was found by experiment and is now hardcoded
+  for(int i=0; i<16; i++)
+  {
+    std::stringstream str;
+
+    str<<"vis_data/tws_data/"<<i<<".tga";
+
+    tex[i]=LoadTexture((char*)str.str().c_str());
+  }
+
+  origin_x_=-50.0;
+  origin_y_=1240.0;
+  angle_=3.37159;
+  scale_=1024.0;
+  for(int i=0; i<16; i++)
+  {    
+    angle[i]=0.0;
+    scale[i]=2.0;
+  }
+
+  offset_x[0]=-7;
+  offset_y[0]=3;
+  offset_x[1]=6;
+  offset_y[1]=-3;
+  offset_x[2]=3;
+  offset_y[2]=1;
+  offset_x[3]=0;
+  offset_y[3]=0;
+  offset_x[4]=-2;
+  offset_y[4]=-1;
+  offset_x[5]=16;
+  offset_y[5]=-6;
+  offset_x[6]=11;
+  offset_y[6]=-8;
+  offset_x[7]=15;
+  offset_y[7]=1;
+  offset_x[8]=2;
+  offset_y[8]=1;
+  offset_x[9]=-4;
+  offset_y[9]=-7;
+  offset_x[10]=0;
+  offset_y[10]=-8;
+  offset_x[11]=-3;
+  offset_y[11]=-9;
+  offset_x[12]=18;
+  offset_y[12]=-6;
+  offset_x[13]=5;
+  offset_y[13]=-23;
+  offset_x[14]=1;
+  offset_y[14]=-23;
+  offset_x[15]=0;
+  offset_y[15]=-21;
+
+  angle[0]=0.004;
+  angle[1]=-0.008;
+  angle[2]=0.0;
+  angle[3]=0.0;
+  angle[4]=-0.001;
+  angle[5]=0.0;
+  angle[6]=0.006;
+  angle[7]=-0.021;
+  angle[8]=0.009;
+  angle[9]=0.004;
+  angle[10]=-0.014;
+  angle[11]=-0.005;
+  angle[12]=0.015;
+  angle[13]=0.006;
+  angle[14]=0.001;
+  angle[15]=-0.003;
+
+  scale[10]=1.99798;
+  scale[12]=2.02615;
+  scale[14]=2.00397;
+
+
+  double dx_horiz=cos(angle_)*scale_;
+  double dx_vert=sin(angle_)*scale_;
+  double dy_horiz=cos(angle_+PI_/2.0)*scale_;
+  double dy_vert=sin(angle_+PI_/2.0)*scale_;
+
+  for(int i=0; i<16; i++)
+  {
+    int x_i=(i%4);
+    int y_i=(i/4);    
+
+    pos_x[i]=origin_x_+x_i*dx_horiz+y_i*dy_horiz;
+    pos_y[i]=origin_y_+x_i*dx_vert+y_i*dy_vert;
+  }
+}
+
+
 // render
 //------------------------------------------------------------------
 void TWSData::render_edges()
 {
-  glColor3f(0.7f, 0.7f, 0.7f);
+  glColor3f(0.0f, 0.0f, 0.0f);
   left_.render();
   right_.render();
   island_.render();
