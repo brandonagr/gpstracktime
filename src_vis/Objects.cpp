@@ -28,9 +28,9 @@ void Waypoint::render()
 
   Vec3 v;
 
-  v=Vec3(pos_[0],0.0,pos_[1]);
+  v=Vec3(pos_[0]-left_dir_[0]*20,0.0,pos_[1]-left_dir_[1]*20);
   glVertex3dv(v.Ref());
-  v=Vec3(pos_[0]+left_dir_[0]*50,0.0,pos_[1]+left_dir_[1]*50);
+  v=Vec3(pos_[0]+left_dir_[0]*70,0.0,pos_[1]+left_dir_[1]*70);
   glVertex3dv(v.Ref());
 
   glEnd();
